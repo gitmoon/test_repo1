@@ -1,0 +1,13 @@
+class CliCommandConsts:
+    COMMAND_EMPTY: str = ""
+    COMMAND_LOGOUT: str = "logout"
+    COMMAND_REBOOT: str = "reboot"
+    COMMAND_RESET: str = "reset"
+    COMMAND_BOOT: str = "boot"
+    COMMAND_BOOT_FROM_EMMC: str = "bmode emmc"
+    COMMAND_KILL: str = "kill "
+    COMMAND_CTRL_C: str = "\x03"
+    COMMAND_DBUS_SIGNAL: str = "dbus-monitor --system \"sender=org.welbilt.firmwaremanager, path=/instance, member=\" &"
+    COMMAND_DBUS_METHOD: str = "dbus-send --print-reply --system --dest=org.welbilt.firmwaremanager /instance "
+    DBUS_SIGNAL_COMMAND_MEMBER: str = "member="
+    COMMAND_PS_WITH_GREP: str = "ps -A | grep "
