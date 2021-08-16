@@ -3,7 +3,7 @@
 # Username to login into CLI of WB Common UI board
 CLI_COMMON_USER_NAME = "root"
 # Password to login into CLI of WB Common UI board
-CLI_COMMON_PASSWORD = "welbiltUser!2227"
+CLI_COMMON_PASSWORD = "welbiltUser!2228"
 # The time for waiting for the board to be switched into the bootloader mode
 CLI_COMMON_BOOTLOADER_TIMEOUT = 120
 # The time for waiting for the board to be rebooted
