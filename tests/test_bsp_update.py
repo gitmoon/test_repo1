@@ -285,17 +285,6 @@ class TestBspUpdate:
     def __remove_emulated_flash_folders(self):
         print("__remove_emulated_flash_folders()")
 
-        with allure.step("Cleanup both partitions on eMMC"):
-            CommonHelper.reboot_to_emmc()
-            self.__cli_common_util.login()
-            self.__usb_flash.emulate_flash_stop()
-
-            self.__cli_dbus_util.run_method(DbusFuncConsts.SWITCH_TO_ALT_FW, expected_return=False)
-
-            CommonHelper.run_from_emmc_after_reboot()
-            self.__cli_common_util.login()
-            self.__usb_flash.emulate_flash_stop()
-
         with allure.step("Cleanup both partitions on SD-Card"):
             self.__cli_common_util.reboot()
             self.__cli_common_util.login()
@@ -329,20 +318,6 @@ class TestBspUpdate:
     def __prepare_for_fw_update(self):
         print("__prepare_for_fw_update()")
         self.__modify_fw_version(self.__get_random_test_version())
-
-    @pytest.fixture(scope='function')
-    def __run_from_emmc(self):
-        print("__run_from_emmc()")
-        CommonHelper.reboot_to_emmc()
-        assert self.__cli_common_util.login() is True
-        self.__check_boot_device(CommonConst.BOOT_DEVICE_EMMC)
-        self.__prepare_default()
-        CommonHelper.reboot_to_emmc()
-        assert self.__cli_common_util.login() is True
-        self.__check_boot_device(CommonConst.BOOT_DEVICE_EMMC)
-        yield
-        print("__run_from_emmc() after yield")
-        self.__teardown_default()
 
     @pytest.fixture(scope='function')
     def __run_from_sdcard(self):
@@ -399,9 +374,9 @@ class TestBspUpdate:
         self.__debug_cli.send_message(f"{CommonConst.COMMAND_ECHO}{version} > {version_path}")
         time.sleep(CommonConst.TIMEOUT_2_SEC)
 
-    @allure.story("SW.BSP.UPDATE.030 Firmware Update through USB Flash on eMMC")
-    def test_fw_update_emmc_from_usb(self, __run_from_emmc, __prepare_for_fw_update):
-        print("test_fw_update_emmc_from_usb()")
+    @allure.story("SW.BSP.UPDATE.030 Firmware Update through USB Flash on SD Card")
+    def test_fw_update_sdcard_from_usb(self, __run_from_sdcard, __prepare_for_fw_update):
+        print("test_fw_update_sdcard_from_usb()")
         update_state_list = []
 
         with allure.step("Create 'modelNumber.txt'"):
@@ -444,7 +419,7 @@ class TestBspUpdate:
                 update_state_list) is True
 
         with allure.step("Wait till the board to be rebooted and log in"):
-            CommonHelper.run_from_emmc_after_reboot()
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN , CliRegexConsts.REGEX_LOGIN) is not None
             assert self.__cli_common_util.login() is True
 
         with allure.step("Check Linux Kernel version"):
@@ -462,7 +437,7 @@ class TestBspUpdate:
         assert alternate_version in old_version
         assert new_partition not in old_partition
 
-    @allure.story("SW.BSP.UPDATE.031 Firmware Update through USB Flash on eMMC, no modelNumber file")
+    @allure.story("SW.BSP.UPDATE.031 Firmware Update through USB Flash on SD Card, no modelNumber file")
     def test_fw_update_emmc_from_usb_no_modelNumber_file(self, __run_from_emmc, __prepare_for_fw_update):
         print("test_fw_update_emmc_from_usb_no_modelNumber_file()")
         update_state_list = []
@@ -527,62 +502,7 @@ class TestBspUpdate:
         assert alternate_version in old_version
         assert new_partition not in old_partition
 
-    @allure.story("SW.BSP.UPDATE.032 Firmware Update through USB Flash on SD Card, not compatible modelNumber file on eMMC")
-    def test_fw_update_sdcard_from_usb_not_compatible_modelNumber_file(self, __run_from_sdcard, __prepare_for_fw_update):
-        print("test_fw_update_sdcard_from_usb_not_compatible_modelNumber_file()")
-        update_state_list = []
-
-        with allure.step("Create 'modelNumber.txt'"):
-            self.__create_model_number_file(content=CommonConst.FILE_MODEL_NUMBER_CONTENT_TEST)
-
-        old_version, old_partition = self.__get_fw_info()
-
-        with allure.step("Prepare the usb storage device and the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-
-        with allure.step(
-                "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\""
-                " and \"firmwareUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
-
-        with allure.step("Connect USB flash to Common UI board"):
-            self.__usb_flash.emulate_flash_start()
-
-        with allure.step(
-                "Wait for firmware update to be finished and compare resulted D-Bus signal sequence with required"):
-            assert self.__cli_dbus_util.get_signal(timeout=CommonConst.TIMEOUT_4_MIN) is not None
-            assert CommonConst.CHECK_RESULTS_SUCCESS in self.__debug_cli.get_message(
-                CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_DBUS_CHECK_RESULTS)
-            self.__start_signal_polling_thread(update_state_list,
-                                               BspUpdateSignalSequences.update_fw_from_usb_or_after_suspense[-1])
-            assert self.__wait_for_polling_thread_finish(CommonConst.TIMEOUT_25_MIN) is True
-            assert self.__compare_result_lists(
-                BspUpdateSignalSequences.update_fw_from_usb_or_after_suspense,
-                update_state_list) is True
-
-        with allure.step("Wait till the board to be rebooted and log in"):
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_LOGIN) is not None
-            assert self.__cli_common_util.login() is True
-
-        with allure.step("Check Linux Kernel version"):
-            self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.PROC_VERSION)
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
-                                                CommonRegex.LINUX_KERNEL_VERSION) is not None
-
-        with allure.step("Check BSP Release version"):
-            self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.BSP_VERSION)
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
-                                                CommonRegex.BSP_VERSION_RESULT) is not None
-
-        new_version, new_partition, alternate_version = self.__get_fw_info(get_alt_fw_version=True)
-        assert new_version not in old_version
-        assert alternate_version in old_version
-        assert new_partition not in old_partition
-
-    @allure.story("SW.BSP.UPDATE.033 Negative: Firmware Update through USB Flash on eMMC, same firmware version")
+    @allure.story("SW.BSP.UPDATE.033 Negative: Firmware Update through USB Flash on SD Card, same firmware version")
     def test_fw_update_emmc_from_usb_same_version(self, __run_from_emmc):
         print("test_fw_update_emmc_from_usb_same_version()")
 
@@ -626,7 +546,7 @@ class TestBspUpdate:
         assert new_version in old_version
         assert new_partition in old_partition
 
-    @allure.story("SW.BSP.UPDATE.034 Negative: Firmware Update through USB Flash on eMMC, not compatible firmware")
+    @allure.story("SW.BSP.UPDATE.034 Negative: Firmware Update through USB Flash on SD Card, not compatible firmware")
     def test_fw_update_emmc_from_usb_not_compatible_fw(self, __run_from_emmc, __prepare_for_fw_update):
         print("test_fw_update_emmc_from_usb_not_compatible_fw()")
 
@@ -778,7 +698,7 @@ class TestBspUpdate:
         assert new_partition not in old_partition
 
     @allure.story(
-        "SW.BSP.UPDATE.042 Negative: Firmware Update through USB Flash on eMMC, missing file in the new firmware package")
+        "SW.BSP.UPDATE.042 Negative: Firmware Update through USB Flash on SD Card, missing file in the new firmware package")
     def test_fw_update_emmc_from_usb_image_miss_file(self, __run_from_emmc, __prepare_for_fw_update):
 
         with allure.step("Create 'modelNumber.txt'"):
@@ -891,23 +811,6 @@ class TestBspUpdate:
         assert alternate_version not in old_version
         assert new_partition in old_partition
 
-    @allure.story("SW.BSP.UPDATE.050 Switch to alternative firmware on eMMC")
-    def test_fw_update_emmc_switch_to_alternative(self, __run_from_emmc, __prepare_for_fw_update):
-
-        old_version, old_partition, old_alternate_version = self.__get_fw_info(get_alt_fw_version=True)
-
-        with allure.step("Switch to alternative firmware"):
-            self.__cli_dbus_util.run_method(DbusFuncConsts.SWITCH_TO_ALT_FW, expected_return=False)
-
-        with allure.step("Wait till the board to be rebooted and log in"):
-            CommonHelper.run_from_emmc_after_reboot()
-            assert self.__cli_common_util.login() is True
-
-        new_version, new_partition, alternate_version = self.__get_fw_info(get_alt_fw_version=True)
-        assert new_version in old_alternate_version
-        assert alternate_version in old_version
-        assert new_partition not in old_partition
-
     @allure.story(
         "SW.BSP.UPDATE.060 Firmware Update through USB Flash on SD Card, suspend and wait 10 minutes to update")
     def test_fw_update_sdcard_from_usb_with_suspend(self, __run_from_sdcard, __prepare_for_fw_update):
@@ -951,7 +854,7 @@ class TestBspUpdate:
         assert alternate_version in old_version
         assert new_partition not in old_partition
 
-    @allure.story("SW.BSP.UPDATE.070 Firmware Update through USB Flash on eMMC, suspend and resume to update")
+    @allure.story("SW.BSP.UPDATE.070 Firmware Update through USB Flash on SD Card, suspend and resume to update")
     def test_fw_update_emmc_from_usb_with_suspend_and_resume(self, __run_from_emmc, __prepare_for_fw_update):
         update_state_list = []
 
@@ -1039,7 +942,7 @@ class TestBspUpdate:
         assert alternate_version in old_version
         assert new_partition not in old_partition
 
-    @allure.story("SW.BSP.UPDATE.090 Firmware Update through USB Flash on eMMC, suspend and reject to update")
+    @allure.story("SW.BSP.UPDATE.090 Firmware Update through USB Flash on SD Card, suspend and reject to update")
     def test_fw_update_emmc_from_usb_with_suspend_reject(self, __run_from_emmc, __prepare_for_fw_update):
         update_state_list = []
 
@@ -1119,76 +1022,8 @@ class TestBspUpdate:
         assert new_version in old_version
         assert new_partition in old_partition
 
-    @allure.story("SW.BSP.UPDATE.110 Firmware Update from Common UI file system on eMMC")
-    def test_fw_update_emmc_from_emmc(self, __run_from_emmc, __prepare_for_fw_update):
-        update_state_list = []
-
-        old_version, old_partition = self.__get_fw_info()
-
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_EMMC) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
-
-        with allure.step("Execute following command: forceFirmwareUpdate"):
-            assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
-                                                   parameter=CommonConst.FW_PCKG_PATH_ON_EMMC + CommonConst.FW_FILE_NAME) is True
-
-        with allure.step("Wait for firmware to be checked and compare resulted D-Bus signal sequence with required"):
-            assert self.__wait_for_polling_thread_finish(CommonConst.TIMEOUT_25_MIN) is True
-            assert self.__compare_result_lists(BspUpdateSignalSequences.update_fw_forced, update_state_list) is True
-
-        with allure.step("Wait till the board to be rebooted and log in"):
-            CommonHelper.run_from_emmc_after_reboot()
-            assert self.__cli_common_util.login() is True
-
-        new_version, new_partition, alternate_version = self.__get_fw_info(get_alt_fw_version=True)
-        assert new_version not in old_version
-        assert alternate_version in old_version
-        assert new_partition not in old_partition
-
-    @allure.story("SW.BSP.UPDATE.110.1 Firmware Update from Common UI file system on eMMC (forceUpdate)")
-    def test_fw_force_update_emmc_from_emmc(self, __run_from_emmc, __prepare_for_fw_update):
-        update_state_list = []
-
-        old_version, old_partition = self.__get_fw_info()
-
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_EMMC) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
-
-        with allure.step("Execute following command: forceFirmwareUpdate"):
-            assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
-                                                   parameter=CommonConst.FW_PCKG_PATH_ON_EMMC + CommonConst.FW_FILE_NAME) is True
-
-        with allure.step("Wait for firmware to be checked and compare resulted D-Bus signal sequence with required"):
-            assert self.__wait_for_polling_thread_finish(CommonConst.TIMEOUT_25_MIN) is True
-            assert self.__compare_result_lists(BspUpdateSignalSequences.update_fw_forced, update_state_list) is True
-
-        with allure.step("Wait till the board to be rebooted and log in"):
-            CommonHelper.run_from_emmc_after_reboot()
-            assert self.__cli_common_util.login() is True
-
-        new_version, new_partition, alternate_version = self.__get_fw_info(get_alt_fw_version=True)
-        assert new_version not in old_version
-        assert alternate_version in old_version
-        assert new_partition not in old_partition
-
     @allure.story(
-        "SW.BSP.UPDATE.111 Negative: Firmware Update from Common UI file system on eMMC, invalid sig file in the new firmware package")
+        "SW.BSP.UPDATE.111 Negative: Firmware Update from Common UI file system on SD Card, invalid sig file in the new firmware package")
     def test_fw_update_emmc_from_emmc_corrupted_image(self, __run_from_emmc, __prepare_for_fw_update):
 
         with allure.step("Create 'modelNumber.txt'"):
@@ -1230,7 +1065,7 @@ class TestBspUpdate:
         assert new_partition in old_partition
 
     @allure.story(
-        "SW.BSP.UPDATE.111.1 Negative: Firmware Update from Common UI file system on eMMC, invalid sig file in the new firmware package (forceUpdate)")
+        "SW.BSP.UPDATE.111.1 Negative: Firmware Update from Common UI file system on SD Card, invalid sig file in the new firmware package (forceUpdate)")
     def test_fw_force_update_emmc_from_emmc_corrupted_image(self, __run_from_emmc, __prepare_for_fw_update):
 
         with allure.step("Create 'modelNumber.txt'"):
@@ -1431,125 +1266,6 @@ class TestBspUpdate:
         assert alternate_version in old_version
         assert new_partition not in old_partition
 
-    @allure.story("SW.BSP.UPDATE.122 Firmware Update from Common UI file system on eMMC, not compatible modelNumber file on SD Card")
-    def test_fw_update_emmc_not_compatible_model_number_file_on_sdcard(self, __run_from_sdcard):
-        update_state_list = []
-
-        with allure.step("Reboot to eMMC"):
-            CommonHelper.reboot_to_emmc()
-            assert self.__cli_common_util.login() is True
-            self.__modify_fw_version(self.__get_random_test_version())
-
-        with allure.step("Get current boot device, eMMC should be returned"):
-            assert CommonConst.BOOT_DEVICE_EMMC in self.__cli_dbus_util.run_method(
-                DbusFuncConsts.GET_CURRENT_BOOT_DEVICE)
-
-        with allure.step("Create 'modelNumber.txt'"):
-            self.__create_model_number_file(path=CommonConst.FW_PCKG_PATH_ON_SDCARD,
-                                            content=CommonConst.FILE_MODEL_NUMBER_CONTENT_TEST)
-
-        old_version, old_partition = self.__get_fw_info()
-
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_EMMC) is True
-
-        with allure.step("Create 'modelNumber.txt'"):
-            self.__create_model_number_file(content=CommonConst.FILE_MODEL_NUMBER_CONTENT_COMMONUI)
-
-        with allure.step(
-                "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
-                "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
-
-        with allure.step("Execute following command: forceFirmwareUpdate"):
-            assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
-                                                   parameter=CommonConst.FW_PCKG_PATH_ON_EMMC + CommonConst.FW_FILE_NAME) is True
-
-        with allure.step("Wait for firmware to be checked and compare resulted D-Bus signal sequence with required"):
-            assert self.__cli_dbus_util.get_signal(timeout=CommonConst.TIMEOUT_4_MIN) is not None
-            assert CommonConst.CHECK_RESULTS_SUCCESS in self.__debug_cli.get_message(
-                CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_DBUS_CHECK_RESULTS)
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
-            assert self.__wait_for_polling_thread_finish(CommonConst.TIMEOUT_25_MIN) is True
-            assert self.__compare_result_lists(BspUpdateSignalSequences.update_fw_forced, update_state_list) is True
-
-        with allure.step("Wait till the board to be rebooted and log in"):
-            CommonHelper.run_from_emmc_after_reboot()
-            assert self.__cli_common_util.login() is True
-
-        with allure.step("Get current boot device, eMMC should be returned"):
-            assert CommonConst.BOOT_DEVICE_EMMC in self.__cli_dbus_util.run_method(
-                DbusFuncConsts.GET_CURRENT_BOOT_DEVICE)
-
-        new_version, new_partition, alternate_version = self.__get_fw_info(get_alt_fw_version=True)
-        assert new_version not in old_version
-        assert alternate_version in old_version
-        assert new_partition not in old_partition
-
-    @allure.story(
-        "SW.BSP.UPDATE.122.1 Firmware Update from Common UI file system on eMMC, not compatible modelNumber file on SD Card (forceUpdate)")
-    def test_fw_force_update_emmc_not_compatible_model_number_file_on_sdcard(self, __run_from_sdcard):
-        update_state_list = []
-
-        with allure.step("Reboot to eMMC"):
-            CommonHelper.reboot_to_emmc()
-            assert self.__cli_common_util.login() is True
-            self.__modify_fw_version(self.__get_random_test_version())
-
-        with allure.step("Get current boot device, eMMC should be returned"):
-            assert CommonConst.BOOT_DEVICE_EMMC in self.__cli_dbus_util.run_method(
-                DbusFuncConsts.GET_CURRENT_BOOT_DEVICE)
-
-        with allure.step("Create 'modelNumber.txt'"):
-            self.__create_model_number_file(path=CommonConst.FW_PCKG_PATH_ON_SDCARD,
-                                            content=CommonConst.FILE_MODEL_NUMBER_CONTENT_TEST)
-
-        old_version, old_partition = self.__get_fw_info()
-
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_EMMC) is True
-
-        with allure.step("Create 'modelNumber.txt'"):
-            self.__create_model_number_file(content=CommonConst.FILE_MODEL_NUMBER_CONTENT_COMMONUI)
-
-        with allure.step(
-                "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
-                "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
-
-        with allure.step("Execute following command: forceFirmwareUpdate"):
-            assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
-                                                   parameter=CommonConst.FW_PCKG_PATH_ON_EMMC + CommonConst.FW_FILE_NAME) is True
-
-        with allure.step("Wait for firmware to be checked and compare resulted D-Bus signal sequence with required"):
-            assert self.__cli_dbus_util.get_signal(timeout=CommonConst.TIMEOUT_4_MIN) is not None
-            assert CommonConst.CHECK_RESULTS_SUCCESS in self.__debug_cli.get_message(
-                CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_DBUS_CHECK_RESULTS)
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
-            assert self.__wait_for_polling_thread_finish(CommonConst.TIMEOUT_25_MIN) is True
-            assert self.__compare_result_lists(BspUpdateSignalSequences.update_fw_forced, update_state_list) is True
-
-        with allure.step("Wait till the board to be rebooted and log in"):
-            CommonHelper.run_from_emmc_after_reboot()
-            assert self.__cli_common_util.login() is True
-
-        with allure.step("Get current boot device, eMMC should be returned"):
-            assert CommonConst.BOOT_DEVICE_EMMC in self.__cli_dbus_util.run_method(
-                DbusFuncConsts.GET_CURRENT_BOOT_DEVICE)
-
-        new_version, new_partition, alternate_version = self.__get_fw_info(get_alt_fw_version=True)
-        assert new_version not in old_version
-        assert alternate_version in old_version
-        assert new_partition not in old_partition
-
     @allure.story(
         "SW.BSP.UPDATE.123 Negative: Firmware Update from Common UI file system on SD Card, not compatible firmware")
     def test_fw_update_sdcard_not_compatible_firmware(self, __run_from_sdcard, __prepare_for_fw_update):
@@ -1637,7 +1353,7 @@ class TestBspUpdate:
         assert new_partition in old_partition
 
     @allure.story(
-        "SW.BSP.UPDATE.124 Negative: Firmware Update from Common UI file system on eMMC, broken new firmware package")
+        "SW.BSP.UPDATE.124 Negative: Firmware Update from Common UI file system on SD Card, broken new firmware package")
     def test_fw_update_sdcard_broken_firmware_package(self, __run_from_emmc, __prepare_for_fw_update):
 
         old_version, old_partition = self.__get_fw_info()
@@ -1676,7 +1392,7 @@ class TestBspUpdate:
         assert new_partition in old_partition
 
     @allure.story(
-        "SW.BSP.UPDATE.124.1 Negative: Firmware Update from Common UI file system on eMMC, broken new firmware package (forceUpdate)")
+        "SW.BSP.UPDATE.124.1 Negative: Firmware Update from Common UI file system on SD Card, broken new firmware package (forceUpdate)")
     def test_fw_force_update_sdcard_broken_firmware_package(self, __run_from_emmc, __prepare_for_fw_update):
 
         old_version, old_partition = self.__get_fw_info()
@@ -1734,7 +1450,7 @@ class TestBspUpdate:
         assert new_partition not in old_partition
 
     @allure.story(
-        "SW.BSP.UPDATE.140 Firmware Update from Common UI file system on eMMC, suspend and wait 10 minutes to update")
+        "SW.BSP.UPDATE.140 Firmware Update from Common UI file system on SD Card, suspend and wait 10 minutes to update")
     def test_fw_update_emmc_from_emmc_with_suspend(self, __run_from_emmc, __prepare_for_fw_update):
         update_state_list = []
 
@@ -1781,7 +1497,7 @@ class TestBspUpdate:
         assert new_partition not in old_partition
 
     @allure.story(
-        "SW.BSP.UPDATE.140.1 Firmware Update from Common UI file system on eMMC, suspend and wait 10 minutes to update (forceUpdate)")
+        "SW.BSP.UPDATE.140.1 Firmware Update from Common UI file system on SD Card, suspend and wait 10 minutes to update (forceUpdate)")
     def test_fw_force_update_emmc_from_emmc_with_suspend(self, __run_from_emmc, __prepare_for_fw_update):
         update_state_list = []
 
@@ -1947,7 +1663,7 @@ class TestBspUpdate:
         assert alternate_version in old_version
         assert new_partition not in old_partition
 
-    @allure.story("SW.BSP.UPDATE.160 Firmware Update from Common UI file system on eMMC, resume to update")
+    @allure.story("SW.BSP.UPDATE.160 Firmware Update from Common UI file system on SD Card, resume to update")
     def test_fw_update_emmc_from_emmc_with_resume(self, __run_from_emmc, __prepare_for_fw_update):
         update_state_list = []
 
@@ -1993,7 +1709,7 @@ class TestBspUpdate:
         assert alternate_version in old_version
         assert new_partition not in old_partition
 
-    @allure.story("SW.BSP.UPDATE.160.1 Firmware Update from Common UI file system on eMMC, resume to update (forceUpdate)")
+    @allure.story("SW.BSP.UPDATE.160.1 Firmware Update from Common UI file system on SD Card, resume to update (forceUpdate)")
     def test_fw_force_update_emmc_from_emmc_with_resume(self, __run_from_emmc, __prepare_for_fw_update):
         update_state_list = []
 
@@ -2135,7 +1851,7 @@ class TestBspUpdate:
         assert new_version in old_version
         assert new_partition in old_partition
 
-    @allure.story("SW.BSP.UPDATE.180 Firmware Update from Common UI file system on eMMC, reject to update")
+    @allure.story("SW.BSP.UPDATE.180 Firmware Update from Common UI file system on SD Card, reject to update")
     def test_fw_update_emmc_from_emmc_with_reject(self, __run_from_emmc, __prepare_for_fw_update):
         update_state_list = []
 
@@ -2174,7 +1890,7 @@ class TestBspUpdate:
         assert new_version in old_version
         assert new_partition in old_partition
 
-    @allure.story("SW.BSP.UPDATE.180.1 Firmware Update from Common UI file system on eMMC, reject to update (forceUpdate)")
+    @allure.story("SW.BSP.UPDATE.180.1 Firmware Update from Common UI file system on SD Card, reject to update (forceUpdate)")
     def test_fw_force_update_emmc_from_emmc_with_reject(self, __run_from_emmc, __prepare_for_fw_update):
         update_state_list = []
 
@@ -2282,7 +1998,7 @@ class TestBspUpdate:
             screengrabber_new = self.__get_package_version(CommonRegex.RESULT_SCREENGRABBER)
             assert expected_screengrabber_version in screengrabber_new
 
-    @allure.story("SW.BSP.UPDATE.190 Firmware Package Update through USB Flash on eMMC, one package")
+    @allure.story("SW.BSP.UPDATE.190 Firmware Package Update through USB Flash on SD Card, one package")
     def test_package_update_emmc_from_usb_one_package(self, __run_from_emmc):
         update_state_list = []
 
@@ -2348,7 +2064,7 @@ class TestBspUpdate:
             assert hw_manager_new is not None
             assert package_test_version not in hw_manager_new
 
-    @allure.story("SW.BSP.UPDATE.191 Negative: Firmware Package Update through USB Flash on eMMC, one not compatible package")
+    @allure.story("SW.BSP.UPDATE.191 Negative: Firmware Package Update through USB Flash on SD Card, one not compatible package")
     def test_package_update_emmc_from_usb_one_package_not_compatible_package(self, __run_from_emmc):
 
         with allure.step("Create 'modelNumber.txt'"):
@@ -2468,7 +2184,7 @@ class TestBspUpdate:
             assert screengrabber_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.193 Negative: Firmware Package Update through USB Flash on eMMC, two packages, "
+        "SW.BSP.UPDATE.193 Negative: Firmware Package Update through USB Flash on SD Card, two packages, "
         "one package with missing file")
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_emmc_from_usb_two_packages_one_with_missing_file(self, __run_from_emmc):
@@ -2540,7 +2256,7 @@ class TestBspUpdate:
             assert screengrabber_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.194 Negative: Firmware Package Update through USB Flash on eMMC after power loss during firmware update")
+        "SW.BSP.UPDATE.194 Negative: Firmware Package Update through USB Flash on SD Card after power loss during firmware update")
     def test_package_update_emmc_from_usb_one_packages_power_loss(self, __run_from_emmc, __prepare_for_fw_update):
         update_state_list = []
 
@@ -2700,7 +2416,7 @@ class TestBspUpdate:
             assert package_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.210 Firmware Package Update through USB Flash on eMMC, suspend and resume to update, one package")
+        "SW.BSP.UPDATE.210 Firmware Package Update through USB Flash on SD Card, suspend and resume to update, one package")
     def test_package_update_emmc_from_usb_with_suspend_resume(self, __run_from_emmc):
         update_state_list = []
 
@@ -2809,7 +2525,7 @@ class TestBspUpdate:
             assert package_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.230 Firmware Package Update through USB Flash on eMMC, suspend and reject to update, one package")
+        "SW.BSP.UPDATE.230 Firmware Package Update through USB Flash on SD Card, suspend and reject to update, one package")
     def test_package_update_emmc_from_usb_with_suspend_reject(self, __run_from_emmc):
         update_state_list = []
 
@@ -2915,7 +2631,7 @@ class TestBspUpdate:
             assert package_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.250 Firmware Package Update from Common UI file system on eMMC, two packages")
+        "SW.BSP.UPDATE.250 Firmware Package Update from Common UI file system on SD Card, two packages")
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_emmc_from_emmc_two_packs(self, __run_from_emmc):
         update_state_list = []
@@ -2972,7 +2688,7 @@ class TestBspUpdate:
             assert package_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.250.1 Firmware Package Update from Common UI file system on eMMC, two packages (forceUpdate)")
+        "SW.BSP.UPDATE.250.1 Firmware Package Update from Common UI file system on SD Card, two packages (forceUpdate)")
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_emmc_from_emmc_two_packs(self, __run_from_emmc):
         update_state_list = []
@@ -3177,7 +2893,7 @@ class TestBspUpdate:
             assert package_test_screengrabber_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.252 Negative: Firmware Package Update from Common UI file system on eMMC, "
+        "SW.BSP.UPDATE.252 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one package with invalid sig file")
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_emmc_two_packs_one_with_invalid_sig_file(self, __run_from_emmc):
@@ -3248,7 +2964,7 @@ class TestBspUpdate:
             assert package_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.252.1 Negative: Firmware Package Update from Common UI file system on eMMC, "
+        "SW.BSP.UPDATE.252.1 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one package with invalid sig file (forceUpdate)")
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_emmc_two_packs_one_with_invalid_sig_file(self, __run_from_emmc):
@@ -3463,7 +3179,7 @@ class TestBspUpdate:
             assert package_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.254 Negative: Firmware Package Update from Common UI file system on eMMC, "
+        "SW.BSP.UPDATE.254 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one not compatible")
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_emmc_two_packages_one_not_compatible(self, __run_from_emmc):
@@ -3534,7 +3250,7 @@ class TestBspUpdate:
             assert package_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.254.1 Negative: Firmware Package Update from Common UI file system on eMMC, "
+        "SW.BSP.UPDATE.254.1 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one not compatible (forceUpdate)")
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_emmc_two_packages_one_not_compatible(self, __run_from_emmc):
@@ -3605,7 +3321,7 @@ class TestBspUpdate:
             assert package_test_version not in screengrabber_new
 
     @allure.story(
-        "SW.BSP.UPDATE.260 Firmware Update from Common UI file system on eMMC, suspend and wait 10 minutes to update, one package")
+        "SW.BSP.UPDATE.260 Firmware Update from Common UI file system on SD Card, suspend and wait 10 minutes to update, one package")
     def test_package_update_emmc_from_emmc_with_suspend(self, __run_from_emmc):
         update_state_list = []
 
@@ -3658,7 +3374,7 @@ class TestBspUpdate:
             assert package_test_version not in hw_manager_new
 
     @allure.story(
-        "SW.BSP.UPDATE.260.1 Firmware Update from Common UI file system on eMMC, suspend and wait 10 minutes to update, one package (forceUpdate)")
+        "SW.BSP.UPDATE.260.1 Firmware Update from Common UI file system on SD Card, suspend and wait 10 minutes to update, one package (forceUpdate)")
     def test_package_force_update_emmc_from_emmc_with_suspend(self, __run_from_emmc):
         update_state_list = []
 
@@ -3851,7 +3567,7 @@ class TestBspUpdate:
             screengrabber_new = self.__get_package_version(CommonRegex.RESULT_SCREENGRABBER)
             assert package_test_version not in screengrabber_new
 
-    @allure.story("SW.BSP.UPDATE.280 Firmware Update from Common UI file system on eMMC, resume to update, one package")
+    @allure.story("SW.BSP.UPDATE.280 Firmware Update from Common UI file system on SD Card, resume to update, one package")
     def test_package_update_emmc_from_emmc_with_resume(self, __run_from_emmc):
         update_state_list = []
 
@@ -3903,7 +3619,7 @@ class TestBspUpdate:
             hw_manager_new = self.__get_package_version(CommonRegex.RESULT_HW_MANAGER)
             assert package_test_version not in hw_manager_new
 
-    @allure.story("SW.BSP.UPDATE.280.1 Firmware Update from Common UI file system on eMMC, resume to update, one package (forceUpdate)")
+    @allure.story("SW.BSP.UPDATE.280.1 Firmware Update from Common UI file system on SD Card, resume to update, one package (forceUpdate)")
     def test_package_force_update_emmc_from_emmc_with_resume(self, __run_from_emmc):
         update_state_list = []
 
@@ -4084,7 +3800,7 @@ class TestBspUpdate:
             screengrabber_new = self.__get_package_version(CommonRegex.RESULT_SCREENGRABBER)
             assert package_test_version not in screengrabber_new
 
-    @allure.story("SW.BSP.UPDATE.300 Firmware Update from Common UI file system on eMMC, reject to update, one package")
+    @allure.story("SW.BSP.UPDATE.300 Firmware Update from Common UI file system on SD Card, reject to update, one package")
     def test_package_update_emmc_from_emmc_with_reject(self, __run_from_emmc):
         update_state_list = []
 
@@ -4130,7 +3846,7 @@ class TestBspUpdate:
             hw_manager_new = self.__get_package_version(CommonRegex.RESULT_HW_MANAGER)
             assert package_test_version in hw_manager_new
 
-    @allure.story("SW.BSP.UPDATE.300.1 Firmware Update from Common UI file system on eMMC, reject to update, one package (forceUpdate)")
+    @allure.story("SW.BSP.UPDATE.300.1 Firmware Update from Common UI file system on SD Card, reject to update, one package (forceUpdate)")
     def test_package_force_update_emmc_from_emmc_with_reject(self, __run_from_emmc):
         update_state_list = []
 
