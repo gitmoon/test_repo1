@@ -15,6 +15,7 @@ from tests.common.common_regex import CommonRegex
 from tests.config.config import TEST_HOST_IP_ADDR, WIFI_SSID, WIFI_PASS
 from utils.cli_common_util import CliCommonUtil
 from utils.common.cli_regex_consts import CliRegexConsts
+from utils.common.cli_command_consts import CliCommandConsts
 
 
 @allure.feature("2.7. Reset")
@@ -44,9 +45,13 @@ class TestBootloaderAndOS:
         with allure.step("Execute command: # echo b > /proc/sysrq-trigger"):
             self.__debug_cli.send_message(CommonConst.COMMAND_ECHO + CommonConst.SET_SYSRQ_TRIGG)
             time.sleep(CommonConst.TIMEOUT_2_SEC)
+            time.sleep(CommonConst.TIMEOUT_4_MIN)
+
+        with allure.step("Push empty command to the terminal"):
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_EMPTY)
 
         with allure.step("Wait until system reboot"):
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_LOGIN) is not None
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
             assert self.__cli_common_util.login() is True
 
         with allure.step("Execute command: date"):

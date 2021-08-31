@@ -3,8 +3,8 @@ from re import Pattern
 
 
 class CliRegexConsts:
-    REGEX_LOGGED_IN: Pattern = re.compile(r'root@imx6sxsabresd:.+#|imx6sxsabresd:.+\$')
-    REGEX_LOGIN: Pattern = re.compile(r'imx6sxsabresd login:')
+    REGEX_LOGGED_IN: Pattern = re.compile(r'root@welbilt-common-ui43:.+#|welbilt-common-ui43:.+\$')
+    REGEX_LOGIN: Pattern = re.compile(r'welbilt-common-ui43 login:')
     REGEX_PASSWORD: Pattern = re.compile(r"Password:")
     REGEX_STOP_AUTOBOOT: Pattern = re.compile(
         r"U-Boot \d{4}\.\d{2}-Welbilt\+\w+ \(\w{3} \d{2} \d{4} - \d\d:\d\d:\d\d .\d+\)")

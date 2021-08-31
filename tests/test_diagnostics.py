@@ -20,25 +20,26 @@ class TestDiagnostics:
     assert __debug_cli is not None
     assert __cli_common_util is not None
 
-    @allure.story(
-        "SW.BSP.DIAGNOSTICS.010 There shall be controls for on board diagnostics, include bus voltages, temperature "
-        "sensing, and LEDs. Voltage")
-    def test_voltage_channels(self):
-        with allure.step("Check the bus voltages monitor"):
-            channel_counter = 0
-
-            self.__debug_cli.flush_incoming_data()
-            self.__debug_cli.send_message(CommonConst.COMMAND_LS + CommonConst.ALL_VOLTAGE_CHANNELS)
-            time.sleep(CommonConst.TIMEOUT_20_SEC)
-
-            while True:
-                message = self.__debug_cli.get_message(CommonConst.TIMEOUT_5_SEC,
-                                                       CommonRegex.ALL_VOLTAGE_CHANNELS_RESULT)
-                if message is None:
-                    break
-                else:
-                    channel_counter += 1
-            assert channel_counter == CommonConst.VOLTAGE_CHANNEL_COUNT
+    # !!!!!!!!!!Deprecated (Not implemented at the hardware level) !!!!!!!!!!
+    # @allure.story(
+    #     "SW.BSP.DIAGNOSTICS.010 There shall be controls for on board diagnostics, include bus voltages, temperature "
+    #     "sensing, and LEDs. Voltage")
+    # def test_voltage_channels(self):
+    #     with allure.step("Check the bus voltages monitor"):
+    #         channel_counter = 0
+    #
+    #         self.__debug_cli.flush_incoming_data()
+    #         self.__debug_cli.send_message(CommonConst.COMMAND_LS + CommonConst.ALL_VOLTAGE_CHANNELS)
+    #         time.sleep(CommonConst.TIMEOUT_20_SEC)
+    #
+    #         while True:
+    #             message = self.__debug_cli.get_message(CommonConst.TIMEOUT_5_SEC,
+    #                                                    CommonRegex.ALL_VOLTAGE_CHANNELS_RESULT)
+    #             if message is None:
+    #                 break
+    #             else:
+    #                 channel_counter += 1
+    #         assert channel_counter == CommonConst.VOLTAGE_CHANNEL_COUNT
 
     @allure.story(
         "SW.BSP.DIAGNOSTICS.011 There shall be controls for on board diagnostics, include bus voltages, temperature "
@@ -52,13 +53,14 @@ class TestDiagnostics:
             assert board_temperature is not None
             assert int(board_temperature) in CommonConst.SYSTEM_TEMPERATURE_RANGE
 
-        with allure.step("Check the temperature sensing of the CPU"):
-            self.__debug_cli.flush_incoming_data()
-            self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.CPU_TEMPERATURE_FILE)
-            cpu_temperature = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
-                                                           CommonRegex.SYSTEM_TEMPERATURE_VALUE)
-            assert cpu_temperature is not None
-            assert int(cpu_temperature) in CommonConst.SYSTEM_TEMPERATURE_RANGE
+        # !!!!!!!!!!Deprecated (Not implemented at the hardware level) !!!!!!!!!!
+        # with allure.step("Check the temperature sensing of the CPU"):
+        #     self.__debug_cli.flush_incoming_data()
+        #     self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.CPU_TEMPERATURE_FILE)
+        #     cpu_temperature = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
+        #                                                    CommonRegex.SYSTEM_TEMPERATURE_VALUE)
+        #     assert cpu_temperature is not None
+        #     assert int(cpu_temperature) in CommonConst.SYSTEM_TEMPERATURE_RANGE
 
     @allure.story("SW.BSP.DIAGNOSTICS.040 The Linux BSP software shall include 'GDB'")
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="GDB package available only in \"Development\" builds")

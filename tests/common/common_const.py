@@ -14,7 +14,7 @@ class CommonConst:
     TIMEOUT_15_MIN = 900
     TIMEOUT_25_MIN = 1500
     COMMAND_KERNEL_VERSION = "uname -r"
-    MINIMAL_KERNEL_VERSION = 4443  # 4.4.43
+    MINIMAL_KERNEL_VERSION = 3000  # 3.0.00
     MIN_EMMC_CAPACITY = 7.3  # GiB
     MIN_DRAM_SIZE = 512000  # 512 Mb
     MIN_GPU_MEM_SIZE = 64000000  # 64 Mb
@@ -214,7 +214,7 @@ class CommonConst:
     RUN_FINDFDT = "findfdt"
     TEST_NUMBER_RANGE_MIN = 1000000
     TEST_NUMBER_RANGE_MAX = 9999999
-    EEPROM_FILE = "/sys/bus/i2c/drivers/at24/2-0050/eeprom"
+    EEPROM_FILE = "/sys/bus/i2c/drivers/at24/2-0054/eeprom"
     FRAM_FILE = "/sys/bus/i2c/drivers/at24/3-0050/eeprom"
     HEXDUMP_C = "-C "
     FILE_USB_HOST_ROLE = "/sys/kernel/debug/ci_hdrc.1/role"

@@ -45,6 +45,8 @@ class TestUboot:
         yield
         self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_ENV_DELETE + CommonConst.TEST_ENV_VAR_NAME)
         self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_SAVEENV)
+        # It is necessary to have time to execute the command "save"
+        time.sleep(CommonConst.TIMEOUT_2_SEC)
         self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_PRINTENV + CommonConst.TEST_ENV_VAR_NAME)
         message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
                                                CommonRegex.UBOOT_ENV_NOT_DEFINED)
@@ -134,14 +136,12 @@ class TestUboot:
             assert message_list_new[2] == message_list[2], f"Data '{message_list[2]}' on {i2c_dev_name} " \
                                                            f"was accidentally changed to '{message_list_new[2]}'"
 
-    @pytest.mark.parametrize("boot_device, reboot_command", [("SD Card", CliCommandConsts.COMMAND_RESET),
-                                                             ("eMMC", CliCommandConsts.COMMAND_BOOT_FROM_EMMC)])
-    @allure.story("SW.BSP.UBOOT.040, SW.BSP.UBOOT.050 Verify the U-boot bootloader SD Card and eMMC read/write")
-    def test_uboot_sdcard_emmc(self, boot_device, reboot_command, __cleanup_env_variable, __restore_boot_mode):
+    @allure.story("SW.BSP.UBOOT.040, SW.BSP.UBOOT.050 Verify the U-boot bootloader SD Card read/write")
+    def test_uboot_sdcard(self, __cleanup_env_variable, __restore_boot_mode):
         with allure.step("Reboot and stop at U-boot"):
-            assert self.__cli_common_util.switch_to_bootloader(reboot_command=reboot_command) is True
+            assert self.__cli_common_util.switch_to_bootloader(reboot_command=CliCommandConsts.COMMAND_RESET) is True
 
-        with allure.step("Print the environment variables"):
+    with allure.step("Print the environment variables"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_PRINTENV + CommonConst.TEST_ENV_VAR_NAME)
             message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
                                                    CommonRegex.UBOOT_ENV_NOT_DEFINED)
@@ -151,14 +151,14 @@ class TestUboot:
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_SETENV + CommonConst.TEST_ENV_VAR_NAME + " "
                                           + CommonConst.TEST_ENV_VAR_VALUE)
 
-        with allure.step(f"Save environment variables to {boot_device}"):
+        with allure.step(f"Save environment variables to SD Card"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_SAVEENV)
             message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
                                                    CommonRegex.UBOOT_SAVEENV_DONE)
             assert message is not None, "Saving environment variables failed"
 
         with allure.step("Reboot and stop at U-boot"):
-            assert self.__cli_common_util.switch_to_bootloader(reboot_command=reboot_command) is True
+            assert self.__cli_common_util.switch_to_bootloader(reboot_command=CliCommandConsts.COMMAND_RESET) is True
 
         with allure.step("Print the environment variables"):
             self.__debug_cli.flush_incoming_data()
@@ -173,14 +173,14 @@ class TestUboot:
         with allure.step(f"Delete the variable '{CommonConst.TEST_ENV_VAR_NAME}'"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_ENV_DELETE + CommonConst.TEST_ENV_VAR_NAME)
 
-        with allure.step(f"Save environment variables to {boot_device}"):
+        with allure.step(f"Save environment variables to SD Card"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_SAVEENV)
             message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
                                                    CommonRegex.UBOOT_SAVEENV_DONE)
             assert message is not None, "Saving environment variables failed"
 
         with allure.step("Reboot and stop at U-boot"):
-            assert self.__cli_common_util.switch_to_bootloader(reboot_command=reboot_command) is True
+            assert self.__cli_common_util.switch_to_bootloader(reboot_command=CliCommandConsts.COMMAND_RESET) is True
 
         with allure.step("Print the environment variables"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_PRINTENV + CommonConst.TEST_ENV_VAR_NAME)

@@ -47,7 +47,7 @@ class TestBootloaderAndOS:
             assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, CliRegexConsts.REGEX_LOGIN) is not None
             self.__cli_common_util.wait_for_links_ready_after_start()
 
-        with allure.step("Type login: root, password: welbiltUser!2227 to login"):
+        with allure.step("Type login: root, password: welbiltUser!2228 to login"):
             assert self.__cli_common_util.login() is True
 
     @allure.story("SW.BSP.OS.080 The Linux BSP software shall include a Linux kernel version of at least 4.4.43.")
