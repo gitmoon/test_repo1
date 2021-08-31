@@ -170,37 +170,6 @@ class TestEthernet:
                 f"{CommonConst.HWADDR_STRING}{mac_addr[0]}:{mac_addr[1]}:{mac_addr[2]}:"
                 f"{mac_addr[3]}:{mac_addr[4]}:{mac_addr[5]}")) is not None
 
-    # Deprecated eMMC
-    # @allure.story("SW.BSP.Ethernet.080 Verify that MAC address of the board is stored on the eMMC")
-    # def test_mac_emmc(self):
-    #     with allure.step("Reboot to U-Boot"):
-    #         assert self.__cli_common_util.switch_to_bootloader() is True
-    #         self.__debug_cli.send_message(CliCommandConsts.COMMAND_BOOT_FROM_EMMC)
-    #
-    #     with allure.step("Check the console terminal output. Read boot messages"):
-    #         assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, CommonRegex.READ_MAC_EMMC) is not None
-    #         assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, CliRegexConsts.REGEX_LOGIN)
-    #
-    #     with allure.step("Login to Linux"):
-    #         assert self.__cli_common_util.login() is True
-    #
-    #     with allure.step("Read the MAC address using ifconfig"):
-    #         self.__debug_cli.flush_incoming_data()
-    #         self.__debug_cli.send_message(CommonConst.COMMAND_IFCONFIG + CommonConst.IFACE_ETH)
-    #         mac_address_result = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CommonRegex.IFCONFIG_HWADDR)
-    #         assert mac_address_result is not None
-    #         mac_addr = CommonRegex.MAC_DOTTED.search(mac_address_result).group(0)
-    #
-    #     with allure.step("Delete MAC address from the eMMC"):
-    #         CommonHelper.remove_file(CommonConst.FILE_ETH_MAC, forced=True)
-    #
-    #     with allure.step("Reboot the Common UI Board and check the console terminal output."):
-    #         self.__reboot_with_check_mac_read_from_eeprom(CliCommandConsts.COMMAND_BOOT_FROM_EMMC)
-    #
-    #     with allure.step("Read MAC address from the eMMC"):
-    #         self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.FILE_ETH_MAC)
-    #         assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, re.compile(f"{mac_addr}")) is not None
-
     @allure.story(
         "SW.BSP.Ethernet.090 Boot form SD Card and verify that MAC address of the board is stored on the eMMC")
     def test_mac_sdcard(self):

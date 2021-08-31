@@ -45,7 +45,7 @@ class TestUboot:
         yield
         self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_ENV_DELETE + CommonConst.TEST_ENV_VAR_NAME)
         self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_SAVEENV)
-        # It is necessary to have time to execute the command "save"
+        #It is necessary to have time to execute the command "save"
         time.sleep(CommonConst.TIMEOUT_2_SEC)
         self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_PRINTENV + CommonConst.TEST_ENV_VAR_NAME)
         message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
@@ -141,7 +141,7 @@ class TestUboot:
         with allure.step("Reboot and stop at U-boot"):
             assert self.__cli_common_util.switch_to_bootloader(reboot_command=CliCommandConsts.COMMAND_RESET) is True
 
-    with allure.step("Print the environment variables"):
+        with allure.step("Print the environment variables"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_PRINTENV + CommonConst.TEST_ENV_VAR_NAME)
             message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
                                                    CommonRegex.UBOOT_ENV_NOT_DEFINED)
