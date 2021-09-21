@@ -77,7 +77,6 @@ class CommonConst:
     HWADDR_STRING = "HWaddr "
     FILE_ETH_MAC = "/run/media/mmcblk0p4/eth_mac"
     UDHCPC_ARGUMENT_COUNT_30 = " -t 30"
-    # TTY_RS485 = "/dev/ttymxc0"
     TTY_RS485 = "/dev/ttyS1"
     PACKAGE_SETSERIAL = "setserial"
     SETSERIAL_ARGUMENT_VERSION = " -V"
