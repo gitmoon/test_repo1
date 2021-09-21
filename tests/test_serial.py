@@ -99,7 +99,7 @@ class TestSerial:
     @allure.story("SW.BSP.SERIAL.030 The Linux BSP software shall support single RS-485 serial communication ports. "
                   "(part# MAX13089EASD+T)")
     def test_support_rs485_port(self):
-        with allure.step("Execute command: ls /dev/ttymxc0"):
+        with allure.step("Execute command: ls /dev/ttyS1"):
             self.__debug_cli.send_message(CommonConst.COMMAND_LS + CommonConst.TTY_RS485)
             assert self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC,
                                                 re.compile(rf"^{CommonConst.TTY_RS485}")) is not None

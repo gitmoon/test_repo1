@@ -11,7 +11,7 @@ import time
 import allure
 import pytest
 
-from comm_support_lib.comm_interfaces.can import CAN
+from comm_support_lib.comm_interfaces.can_socket import CAN
 from comm_support_lib.comm_interfaces.debug_cli import DebugCLI
 from tests.common.common_const import CommonConst
 from tests.common.common_helper import CommonHelper

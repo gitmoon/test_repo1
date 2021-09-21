@@ -20,31 +20,6 @@ class TestUSB:
     assert __debug_cli is not None
     assert __cli_common_util is not None
 
-    @allure.story("SW.BSP.USB.010 There shall be controls to support one USB host port and one USB OTG port.")
-    def test_usb_role(self):
-        with allure.step("Execute command to check USB host port"):
-            self.__debug_cli.flush_incoming_data()
-            self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.FILE_USB_HOST_ROLE)
-            result = self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC, CommonRegex.USB_ROLE)
-            assert CommonConst.USB_ROLE_HOST in result
-
-        with allure.step("Check the role of USB OTG and switch it to \"gadget\" if needed"):
-            self.__debug_cli.flush_incoming_data()
-            self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.FILE_USB_OTG_ROLE)
-            result = self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC, CommonRegex.USB_ROLE)
-            if CommonConst.USB_ROLE_GADGET not in result:
-                self.__debug_cli.flush_incoming_data()
-                self.__debug_cli.send_message(
-                    f"{CommonConst.COMMAND_ECHO} \"{CommonConst.USB_ROLE_GADGET}\" > {CommonConst.FILE_USB_OTG_ROLE}")
-                assert self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC,
-                                                    CliRegexConsts.REGEX_LOGGED_IN) is not None
-
-        with allure.step("Execute command to check USB OTG port"):
-            self.__debug_cli.flush_incoming_data()
-            self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.FILE_USB_OTG_ROLE)
-            result = self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC, CommonRegex.USB_ROLE)
-            assert CommonConst.USB_ROLE_GADGET in result
-
     @allure.story("SW.BSP.USB.070 The Linux BSP software shall include 'usbutils'")
     @pytest.mark.skipif(TEST_BUILD_TYPE == "Slim",
                         reason="The test case requires build type \"Production\" or \"Development\"")

@@ -51,14 +51,5 @@ class TestVersion:
         with allure.step("Switch to bootloader"):
             assert self.__cli_common_util.switch_to_bootloader() is True
 
-        with allure.step("Execute U-boot commands to check device tree file"):
-            time.sleep(CommonConst.TIMEOUT_5_SEC)
-            self.__debug_cli.flush_incoming_data()
-            self.__debug_cli.send_message(CommonConst.COMMAND_RUN + CommonConst.RUN_FINDFDT)
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CliRegexConsts.REGEX_UBOOT_CLI) is not None
-
-            self.__debug_cli.send_message(CommonConst.COMMAND_PRINTENV + CommonConst.FDT_FILE)
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CommonRegex.WB_FDT_FILE) is not None
-
         with allure.step("Go back to Linux"):
             assert self.__cli_common_util.switch_to_normal_mode() is True

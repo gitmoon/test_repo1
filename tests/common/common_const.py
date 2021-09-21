@@ -77,7 +77,8 @@ class CommonConst:
     HWADDR_STRING = "HWaddr "
     FILE_ETH_MAC = "/run/media/mmcblk0p4/eth_mac"
     UDHCPC_ARGUMENT_COUNT_30 = " -t 30"
-    TTY_RS485 = "/dev/ttymxc0"
+    # TTY_RS485 = "/dev/ttymxc0"
+    TTY_RS485 = "/dev/ttyS1"
     PACKAGE_SETSERIAL = "setserial"
     SETSERIAL_ARGUMENT_VERSION = " -V"
     RS485_DEFAULT_BAUD = 115200
@@ -205,7 +206,7 @@ class CommonConst:
     LSMOD_GREP_BTWILINK = "| grep btwilink"
     COMMAND_DMESG = "dmesg "
     DMESG_GREP_RTC = "| grep rtc"
-    DMESG_GREP_TAS_AUDIO = "| grep tas5756-audio"
+    DMESG_GREP_TAS_AUDIO = "| grep 5720"
     LS_ALSA_LIB_ALL = "/usr/lib/alsa-lib/*"
     FIND_ALSA_MODULES_ALL = "/ -name \"libasound_module_*.so\""
     COMMAND_PRINTENV = "printenv "
