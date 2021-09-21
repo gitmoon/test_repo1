@@ -3,7 +3,7 @@ import sys
 import threading
 import time
 
-import can
+import can_socket
 import serial  # to handle exceptions
 
 
@@ -35,7 +35,7 @@ class SocketCanDriver:
         """
         try:
             self.__stop_polling_thread.clear()
-            self.__bus = can.interface.Bus(bustype='slcan', channel=self.__socket, rtscts=True, bitrate=self.__baud_rate)
+            self.__bus = can_socket.interface.Bus(bustype='slcan', channel=self.__socket, rtscts=True, bitrate=self.__baud_rate)
             self.__pollingThread = threading.Thread(
                 target=self.__poll_messages,
                 daemon=True
@@ -62,7 +62,7 @@ class SocketCanDriver:
             sys.exit(1)
 
     @staticmethod
-    def __get_dict_from_message(msg: can.Message):
+    def __get_dict_from_message(msg: can_socket.Message):
         return {'id': msg.arbitration_id,
                 'payload': msg.data}
 
@@ -102,7 +102,7 @@ class SocketCanDriver:
         if payload is None:
             payload = []
         try:
-            msg = can.Message(arbitration_id=message_id, data=payload, is_extended_id=is_extended_id)
+            msg = can_socket.Message(arbitration_id=message_id, data=payload, is_extended_id=is_extended_id)
             self.__bus.send(msg)
         except serial.serialutil.SerialException as ex:
             print("Failed to send message through CAN bus: {}".format(ex), file=sys.stderr)
