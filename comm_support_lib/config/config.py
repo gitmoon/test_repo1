@@ -1,7 +1,7 @@
 # Debug CLI config
 
 # Port of the USB-UART serial adapter
-DEBUG_CLI_SERIAL_PORT = "COM4"
+DEBUG_CLI_SERIAL_PORT = "COM9"
 # Baud rate of the USB-UART serial adapter, on which it should work
 DEBUG_CLI_SERIAL_BAUD = 115200
 # Inter-character timeout. Helps to avoid inter-frame gaps

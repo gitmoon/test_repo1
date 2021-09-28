@@ -217,12 +217,7 @@ class TestBspUpdate:
 
         self.__resolve_test_result()
 
-        if boot_device == CommonConst.BOOT_DEVICE_EMMC:
-            assert self.__cli_common_util.login() is True
-            CommonHelper.reboot_to_emmc()
-            assert self.__cli_common_util.login() is True
-            self.__check_boot_device(CommonConst.BOOT_DEVICE_EMMC)
-        elif boot_device == CommonConst.BOOT_DEVICE_SDCARD:
+        if boot_device == CommonConst.BOOT_DEVICE_SDCARD:
             assert self.__cli_common_util.login() is True
             assert self.__cli_common_util.reboot() is True
             assert self.__cli_common_util.login() is True
@@ -236,10 +231,7 @@ class TestBspUpdate:
         with allure.step("Prepare the board for further actions"):
             self.__stop_polling_thread()
             self.__cli_dbus_util.clear_signal_list()
-            if boot_device == CommonConst.BOOT_DEVICE_EMMC:
-                assert CommonHelper.copy_file(fw_path + fw_name, CommonConst.FW_PCKG_PATH_ON_EMMC) is True
-            else:
-                assert CommonHelper.copy_file(fw_path + fw_name, CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            assert CommonHelper.copy_file(fw_path + fw_name, CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
@@ -252,11 +244,7 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
-            if boot_device == CommonConst.BOOT_DEVICE_EMMC:
-                assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
-                                                       parameter=CommonConst.FW_PCKG_PATH_ON_EMMC + fw_name) is True
-            else:
-                assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
+            assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
                                                        parameter=CommonConst.FW_PCKG_PATH_ON_SDCARD + fw_name) is True
 
         with allure.step("Wait for firmware to be checked and compare resulted D-Bus signal sequence with required"):
@@ -268,10 +256,7 @@ class TestBspUpdate:
             assert self.__compare_result_lists(BspUpdateSignalSequences.update_fw_forced, update_state_list) is True
 
         with allure.step("Wait till the board to be rebooted and log in"):
-            if boot_device == CommonConst.BOOT_DEVICE_EMMC:
-                CommonHelper.run_from_emmc_after_reboot()
-            else:
-                assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_LOGIN) is not None
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_LOGIN) is not None
 
             assert self.__cli_common_util.login() is True
 
@@ -351,7 +336,7 @@ class TestBspUpdate:
                 return new_version, new_partition, alternate_version
         return new_version, new_partition
 
-    def __create_model_number_file(self, path: str = CommonConst.FW_PCKG_PATH_ON_EMMC,
+    def __create_model_number_file(self, path: str = CommonConst.FW_PCKG_PATH_ON_SDCARD,
                                    content: str = CommonConst.FILE_MODEL_NUMBER_CONTENT_COMMONUI):
         with allure.step(f"Write {content} to {path}."):
             message_echo = CommonConst.COMMAND_ECHO + content + " > " + \
@@ -419,7 +404,7 @@ class TestBspUpdate:
                 update_state_list) is True
 
         with allure.step("Wait till the board to be rebooted and log in"):
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN , CliRegexConsts.REGEX_LOGIN) is not None
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_LOGIN) is not None
             assert self.__cli_common_util.login() is True
 
         with allure.step("Check Linux Kernel version"):
