@@ -61,16 +61,19 @@ class TestWifi:
 
     @allure.story("SW.BSP.WiFi.010 The Linux BSP software shall include a driver for the Wi Fi radio module "
                   "(part# Jorjin WG7833-B0).")
-    def test_wl18xx(self):
-        with allure.step("Execute ‘lsmod’ command to check if “wl18xx” driver exists or not"):
-            result = CommonHelper.find_matches(CommonConst.COMMAND_LSMOD + CommonConst.LSMOD_GREP_WL18XX,
-                                               CommonRegex.LSMOD_WL18XX, CommonConst.TIMEOUT_10_SEC)
+    def test_ath10k(self):
+        with allure.step("Execute ‘lsmod’ command to check if “ath10k” driver exists or not"):
+            result = CommonHelper.find_matches(CommonConst.COMMAND_LSMOD + CommonConst.LSMOD_GREP_ATH10K,
+                                               CommonRegex.LSMOD_ATH10K, CommonConst.TIMEOUT_10_SEC)
             assert result is not None and len(result) > 0
 
     @allure.story("SW.BSP.WiFi.023 The Linux Wi-Fi controls shall comply with IEEE 802.11 a/b/g/n standards. "
                   "The Linux Wi-Fi driver shall support operating in infrastructure mode as a client and interoperate "
                   "with the IPv4 protocol stack. Verify wireless connection")
     def test_wifi_connection(self, __prepare_wifi_connection, __close_wifi_connection):
+        with allure.step(f"Ping {TEST_HOST_IP_ADDR}"):
+            assert CommonHelper.ping(TEST_HOST_IP_ADDR, CommonConst.TIMEOUT_10_SEC) is True
+
         with allure.step("Get an DHCP IPv4 address"):
             self.__debug_cli.flush_incoming_data()
             self.__debug_cli.send_message(CommonConst.COMMAND_UDHCPC_CHECK + CommonConst.IFACE_WIFI)
@@ -81,9 +84,6 @@ class TestWifi:
 
         with allure.step("Get wlan connection information"):
             assert WIFI_SSID in CommonHelper.wifi_check_connection()
-
-        with allure.step(f"Ping {TEST_HOST_IP_ADDR}"):
-            assert CommonHelper.ping(TEST_HOST_IP_ADDR, CommonConst.TIMEOUT_10_SEC) is True
 
     @allure.story(
         "SW.BSP.WiFi.140 The following Wi-Fi parameters shall be software controllable: Verify transmit power")

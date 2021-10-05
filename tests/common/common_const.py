@@ -164,7 +164,7 @@ class CommonConst:
     PROC_VERSION = "/proc/version"
     BSP_VERSION = "~/jabil/VERSION"
     LAST_SIGNAL_FOR_CORRUPTED_CASE = "forcedFirmwareChecked"
-    FW_FILE_NAME = "welbilt-firmware-imx6sxsabresd.tar"
+    FW_FILE_NAME = "welbilt-firmware-image-welbilt-common-ui43.tar"
     FW_FILE_NAME_INVALID_SIG = "welbilt-firmware-imx6sxsabresd_invalid_sig.tar"
     TEST_VERSION_MIN = 80000000000000
     TEST_VERSION_MAX = 99999999999999
@@ -186,7 +186,7 @@ class CommonConst:
     PACKAGE_IWSPY = "iwspy"
     PACKAGE_IWPRIV = "iwpriv"
     COMMAND_LSMOD = "lsmod "
-    LSMOD_GREP_WL18XX = "| grep wl18xx"
+    LSMOD_GREP_ATH10K = "| grep ath10k"
     COMMAND_IW = "iw "
     IW_SET_TXPOWER = "set txpower "
     IW_DEV = "dev "

@@ -17,8 +17,8 @@ class TestDram:
     assert __debug_cli is not None
     assert __cli_common_util is not None
 
-    @allure.story("SW.BSP.DRAM.020 The Common UI Board shall have at least 512MB DRAM")
-    def test_system_have_512mb_dram(self):
+    @allure.story("SW.BSP.DRAM.020 The Common UI Board shall have at least 128MB_or_256MB DRAM")
+    def test_system_have_128mb_or_256mb_dram(self):
         with allure.step("Execute command to check DRAM size"):
             self.__debug_cli.send_message(CommonConst.COMMAND_DRAM_SIZE)
             command_result = self.__debug_cli.get_message(CommonConst.TIMEOUT_5_SEC,
