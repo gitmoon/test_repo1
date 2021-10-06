@@ -90,7 +90,7 @@ class CommonRegex:
     RESULT_SCREENGRABBER = re.compile(r"screengrabber-\d+\.\d+-r\d+")
     FW_PCKG_VERSION = re.compile(r"\d{8,}")
     BAD_LINUX_KERNEL = re.compile(r"Bad Linux ARM zImage magic!")
-    LSMOD_WL18XX = re.compile(r"wl18xx\s+\d+\s+\d+")
+    LSMOD_ATH10K = re.compile(r"ath10k")
     IW_ERROR = re.compile(r"(Operation not supported)|(Invalid parameter:)")
     IW_LINK_SSID = re.compile(r"SSID: .+")
     IW_POWER_1DBM = re.compile("Tx-Power=1 dBm")
