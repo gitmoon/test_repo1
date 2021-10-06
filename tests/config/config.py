@@ -5,7 +5,7 @@ Common configuration constants
 TEST_BUILD_TYPE = "Production"
 
 # required for "2.7. Reset", "2.8. Ethernet", "2.9. Wi-Fi", "2.10. Networking"
-TEST_HOST_IP_ADDR = "0.0.0.0"
+TEST_HOST_IP_ADDR = "109.86.196.215"
 # required for "2.7. Reset", "2.9. Wi-Fi"
 WIFI_SSID = "ssid"
 # required for "2.7. Reset", "2.9. Wi-Fi"
@@ -18,8 +18,8 @@ USB_DEVICE_NAME = "sda3"  # USB flash drive device name
 TEST_FILE = "100MB.bin"  # Test file name for read and write operations
 HOME_DIR = "/home/root"  # Home directory
 TEMP_DIR = "/temp"  # Temporary directory
-EMULATED_FLASH_DRIVE_PATH = f"/run/media/mmcblk2p4/emulated_flash/{USB_DEVICE_NAME}"
-TEST_FILE_PATH = "/run/media/mmcblk2p4/flash_data/emmc"
+EMULATED_FLASH_DRIVE_PATH = f"/run/media/mmcblk0p4/emulated_flash/{USB_DEVICE_NAME}"
+#TEST_FILE_PATH = "/run/media/mmcblk0p4/flash_data/emmc"
 
 """
 2.10. Networking
@@ -40,7 +40,7 @@ RS_485_PORT_HALF_DUPLEX = "COM1"
 2.26. Firmware Update
 """
 FLASH_DRIVE_PATH = "/run/media/mmcblk0p4/emulated_flash/sda2"
-FW_SOURCE_PATH = "/run/media/mmcblk2p4/flash_data/bsp_update"
+FW_SOURCE_PATH = "/run/media/mmcblk0p4/flash_data/bsp_update"
 
 # could be left unchanged, if there is no necessity to change files hierarchy
 FW_FILE_PATH_ON_FLASH = f"{FW_SOURCE_PATH}/common/"

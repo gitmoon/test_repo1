@@ -362,32 +362,6 @@ class CommonHelper:
                                                     CliRegexConsts.REGEX_LOGGED_IN) is not None
 
     @staticmethod
-    def run_from_emmc_after_reboot():
-        print("run_from_emmc_after_reboot()")
-        command_start_time = time.time()
-        CommonHelper.__debug_cli.flush_incoming_data()
-
-        while True:
-            if time.time() - command_start_time > CommonConst.TIMEOUT_4_MIN:
-                assert False
-            CommonHelper.__debug_cli.send_message(CliCommandConsts.COMMAND_EMPTY)
-            if CommonHelper.__debug_cli.get_message(CommonConst.TIMEOUT_500_MSEC, CliRegexConsts.REGEX_UBOOT_CLI):
-                break
-        CommonHelper.boot_from_emmc()
-
-    @staticmethod
-    def boot_from_emmc():
-        print("boot_from_emmc()")
-        CommonHelper.__debug_cli.send_message(CliCommandConsts.COMMAND_BOOT_FROM_EMMC)
-        assert CommonHelper.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_LOGIN)
-
-    @staticmethod
-    def reboot_to_emmc():
-        print("reboot_to_emmc()")
-        CommonHelper.__cli_common_util.switch_to_bootloader()
-        CommonHelper.boot_from_emmc()
-
-    @staticmethod
     def create_folder(folder: str, with_patents: bool = False):
         CommonHelper.__debug_cli.flush_incoming_data()
 

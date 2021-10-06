@@ -15,7 +15,6 @@ class CommonConst:
     TIMEOUT_25_MIN = 1500
     COMMAND_KERNEL_VERSION = "uname -r"
     MINIMAL_KERNEL_VERSION = 3000  # 3.0.00
-    MIN_EMMC_CAPACITY = 7.3  # GiB
     MIN_DRAM_SIZE = 128000  # 128 Mb
     MIN_GPU_MEM_SIZE = 64000000  # 64 Mb
     I2C_DEV_EEPROM = "2"
@@ -158,8 +157,7 @@ class CommonConst:
     COMMAND_MKDIR = "mkdir "
     MKDIR_ARGUMENT_P = "-p "
     COMMAND_LN_S = "ln -s "
-    FW_PCKG_PATH_ON_EMMC = "/run/media/mmcblk0p4/"
-    FW_PCKG_PATH_ON_SDCARD = "/run/media/mmcblk2p4/"
+    FW_PCKG_PATH_ON_SDCARD = "/run/media/mmcblk0p4/"
     ETC_VERSION = "/etc/version"
     PROC_VERSION = "/proc/version"
     BSP_VERSION = "~/jabil/VERSION"
@@ -178,7 +176,6 @@ class CommonConst:
     HARDWARE_MANAGER_VERSION_PATH = PACKAGE_PATH + "hardware-manager-1.0-r0/version.txt"
     SCREENGRABBER_VERSION_PATH = PACKAGE_PATH + "screengrabber-1.0-r0/version.txt"
     PACKAGE_VERSION_FILE = "version.txt"
-    BOOT_DEVICE_EMMC = "eMMC"
     BOOT_DEVICE_SDCARD = "SD-card"
     COMMAND_RESET = "reset"
     PREFIX_ALL = "*"
