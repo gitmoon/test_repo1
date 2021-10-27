@@ -31,18 +31,4 @@ class TestFRAM:
 
         with allure.step("Execute command to read back the eeprom content"):
             self.__debug_cli.send_message(CommonConst.COMMAND_HEXDUMP + CommonConst.HEXDUMP_C + CommonConst.EEPROM_FILE)
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC, re.compile(random_number)) is not None
-
-    @allure.story("SW.BSP.FRAM.011 The Linux BSP software shall include a driver for FRAM read/write access. "
-                  "The FRAM shall have a capacity of at least 32kBytes. (part# FM24V02A-GTR). FRAM")
-    def test_fram(self):
-        with allure.step("Prepare random integer number"):
-            random_number = str(random.randint(CommonConst.TEST_NUMBER_RANGE_MIN, CommonConst.TEST_NUMBER_RANGE_MAX))
-
-        with allure.step("Execute command to write data into FRAM"):
-            self.__debug_cli.send_message(f"{CommonConst.COMMAND_ECHO}{random_number} > {CommonConst.FRAM_FILE}")
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
-
-        with allure.step("Execute command to read back the FRAM content"):
-            self.__debug_cli.send_message(CommonConst.COMMAND_HEXDUMP + CommonConst.HEXDUMP_C + CommonConst.FRAM_FILE)
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC, re.compile(random_number)) is not None
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_30_SEC, re.compile(random_number)) is not None
