@@ -74,7 +74,7 @@ class CommonConst:
     I2C_SET_DEV_2 = "dev 2"
     I2C_READ_MAC_FROM_EEPROM = "md 0x50 fa.1 6"
     HWADDR_STRING = "HWaddr "
-    FILE_ETH_MAC = "/run/media/mmcblk0p4/eth_mac"
+    ETH_MAC = "fw_printenv ethaddr"
     UDHCPC_ARGUMENT_COUNT_30 = " -t 30"
     TTY_RS485 = "/dev/ttyS1"
     PACKAGE_SETSERIAL = "setserial"
@@ -99,7 +99,6 @@ class CommonConst:
     ALL_VOLTAGE_CHANNELS = " /sys/bus/iio/devices/iio:device0/in_voltage*_channel*_raw"
     VOLTAGE_CHANNEL_COUNT = 4
     BOARD_TEMPERATURE_FILE = " /sys/class/hwmon/hwmon0/temp1_input"
-    CPU_TEMPERATURE_FILE = " /sys/class/thermal/thermal_zone0/temp"
     SYSTEM_TEMPERATURE_RANGE = range(20000, 80000)
     PACKAGE_GDB = "gdb"
     PACKAGE_VALGRIND = "valgrind"
@@ -211,8 +210,7 @@ class CommonConst:
     RUN_FINDFDT = "findfdt"
     TEST_NUMBER_RANGE_MIN = 1000000
     TEST_NUMBER_RANGE_MAX = 9999999
-    EEPROM_FILE = "/sys/bus/i2c/drivers/at24/2-0054/eeprom"
-    FRAM_FILE = "/sys/bus/i2c/drivers/at24/3-0050/eeprom"
+    EEPROM_FILE = "/sys/bus/i2c/drivers/at24/1-0050/eeprom"
     HEXDUMP_C = "-C "
     FILE_USB_HOST_ROLE = "/sys/kernel/debug/ci_hdrc.1/role"
     FILE_USB_OTG_ROLE = "/sys/kernel/debug/ci_hdrc.0/role"

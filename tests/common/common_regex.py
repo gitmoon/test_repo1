@@ -108,5 +108,5 @@ class CommonRegex:
     WB_FDT_FILE = re.compile("fdt_file=imx6sx-welbilt.dtb")
     USB_ROLE = re.compile("host|gadget")
     USER_NAME = re.compile("root|welbilt")
-    EMMC_PARTITION_4 = re.compile("mmcblk0p4")
-    SDCARD_PARTITION_4 = re.compile("mmcblk2p4")
+    USB_PARTITION_2 = re.compile("mmcblk0p2")
+    SDCARD_PARTITION_4 = re.compile("mmcblk0p4")

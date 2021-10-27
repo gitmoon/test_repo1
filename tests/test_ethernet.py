@@ -119,6 +119,8 @@ class TestEthernet:
 
             assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
 
+            time.sleep(CommonConst.TIMEOUT_5_SEC)
+
             with allure.step("Execute command ‘ping’ to remote host"):
                 assert CommonHelper.ping(TEST_HOST_IP_ADDR, CommonConst.TIMEOUT_10_SEC) is True
 
@@ -190,5 +192,5 @@ class TestEthernet:
             self.__reboot_with_check_mac_read_from_eeprom(CliCommandConsts.COMMAND_BOOT)
 
         with allure.step("Read MAC address from the eMMC"):
-            self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.FILE_ETH_MAC)
+            self.__debug_cli.send_message(CommonConst.ETH_MAC)
             assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, re.compile(f"{mac_addr}")) is not None
