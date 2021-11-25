@@ -40,6 +40,7 @@ CORRUPTED_FILE_INVALID_SIG = "welbilt-firmware-image-welbilt-common-ui43_invalid
 HWMANAGER_NO_PACKAGE = "hardware-manager-1.0-r0_update_no_package.tar"
 HWMANAGER_NOT_COMPATIBLE = "hardware-manager-1.0-r0_update_not_compatible.tar" 
 HWMANAGER_INVALID_SIG = "hardware-manager-1.0-r0_update_invalid_sig.tar"
+HWMANAGER_BROKEN = "hardware-manager-1.0-r0_update_broken.tar"
 #------------------------------------------
 MISS_FILES_COLLECTION = ["version.txt", "version.txt.sig",
                          "compatibility_rules.txt", "compatibility_rules.txt.sig",
@@ -234,7 +235,8 @@ class Packages:
         modifyFile(TMP_PACKAGE_DIR + TMP_HW_MANAGER_DIR + VERSION_FILE_SIG)
         packFiles(DIR_CORRUPTED, HWMANAGER_INVALID_SIG, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR, COLLECTION_HW_MANAGER_FULL)        
 
-
+    def broken(self):
+        create_file(DIR_CORRUPTED + HWMANAGER_BROKEN)
 
 def check_production_init():
     DIR_ROOT = "files_for_emulated_flash_drive/"
@@ -267,4 +269,5 @@ if __name__ == "__main__":
         package.compatibility_issue()
         package.missing_file()
         package.invalid_sig()
+        package.broken()
  
