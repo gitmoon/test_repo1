@@ -29,7 +29,7 @@ class CommonHelper:
             if CommonRegex.PATH_FILE_NOT_FOUND.search(message):
                 print("copy_file(). No file/path found on the storage device", file=sys.stderr)
                 return False
-            if CliRegexConsts.REGEX_LOGGED_IN.search(message):
+            if CliRegexConsts.REGEX_LOGGED_IN2.search(message):
                 print("copy_file() done for " + source_file)
                 return True
 
@@ -53,6 +53,29 @@ class CommonHelper:
                 return False
             if CliRegexConsts.REGEX_LOGGED_IN.search(message):
                 print(f"File '{filename}' removed successfully")
+                return True
+
+    @staticmethod
+    def check_file(partition, filename, timeout=CommonConst.TIMEOUT_2_SEC):
+        if partition == 'A':
+            cmd_tmp = CommonConst.PARTITION_A + filename
+        elif partition == 'B':
+            cmd_tmp = CommonConst.PARTITION_B + filename
+        else:
+            print("Undefine partition")
+            return False
+        CommonHelper.__debug_cli.flush_incoming_data()
+        command = f"[ -f '{cmd_tmp}' ] && echo {CommonConst.FOUND_FILE}"
+        CommonHelper.__debug_cli.send_message(command)
+        while True:
+            message = CommonHelper.__debug_cli.get_message(CommonConst.TIMEOUT_5_SEC)
+            if not message:
+                continue
+            if CliRegexConsts.REGEX_LOGGED_IN2.search(message):
+                print(f"Cannot find file '{filename}'", file=sys.stderr)
+                return False
+            if CliRegexConsts.REGEX_FOUND_FILE.search(message):
+                print(f"File '{filename}' found successfully")
                 return True
 
     @staticmethod

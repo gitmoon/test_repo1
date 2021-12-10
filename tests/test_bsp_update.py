@@ -336,6 +336,16 @@ class TestBspUpdate:
                 return new_version, new_partition, alternate_version
         return new_version, new_partition
 
+    def __get_alt_partition(self):
+        new_partition = self.__cli_dbus_util.run_method(DbusFuncConsts.GET_CURR_PARTITION)
+        if new_partition == 'A':
+            return 'B'
+        elif new_partition == 'B':
+            return 'A'
+        else:
+            return CommonConst.UNDEFINED
+
+
     def __create_model_number_file(self, path: str = CommonConst.FW_PCKG_PATH_ON_SDCARD,
                                    content: str = CommonConst.FILE_MODEL_NUMBER_CONTENT_COMMONUI):
         with allure.step(f"Write {content} to {path}."):
@@ -2268,7 +2278,6 @@ class TestBspUpdate:
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
-
         with allure.step("Wait for 'firmwareCheckResults', 'firmwareUpdateState' signals"):
             assert self.__cli_dbus_util.get_signal(timeout=CommonConst.TIMEOUT_4_MIN) is not None
             assert CommonConst.CHECK_RESULTS_SUCCESS in self.__debug_cli.get_message(
@@ -2279,7 +2288,6 @@ class TestBspUpdate:
                 CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_DBUS_RESULT_FW_UPDATE_STATE)
             assert CommonConst.ROOTFS_UPDATE_STARTED in self.__debug_cli.get_message(
                 CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_DBUS_RESULT_FW_UPDATE_STATE)
-
         with allure.step("Disconnect emulated USB flash from the Common UI board"):
             self.__cli_dbus_util.clear_subscription_list()
             self.__cli_dbus_util.clear_signal_list()
@@ -2299,8 +2307,10 @@ class TestBspUpdate:
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
 
         new_version, new_partition, alternate_version = self.__get_fw_info(get_alt_fw_version=True)
+        alt_partition = self.__get_alt_partition()
+        fw_log = CommonHelper.check_file(alt_partition, CommonConst.CHECK_FW_MANGER_LOG)
         assert new_version in old_version
-        assert alternate_version in CommonConst.UNDEFINED
+        assert fw_log is False
         assert new_partition in old_partition
 
         with allure.step("Delete firmware package from flash drive path to prevent fw update"):
