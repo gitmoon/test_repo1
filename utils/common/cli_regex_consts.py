@@ -4,7 +4,7 @@ from re import Pattern
 
 class CliRegexConsts:
     REGEX_LOGGED_IN: Pattern = re.compile(r'root@welbilt-common-ui43:.+#|welbilt-common-ui43:.+$')
-    REGEX_LOGGED_IN2: Pattern = re.compile(r'^root@welbilt-common-ui43:~#.$')
+    REGEX_LOGGED_IN2: Pattern = re.compile(r'^root@welbilt-common-ui43:.#.$')
     REGEX_LOGIN: Pattern = re.compile(r'welbilt-common-ui43 login:')
     REGEX_PASSWORD: Pattern = re.compile(r"Password:")
     REGEX_STOP_AUTOBOOT: Pattern = re.compile(

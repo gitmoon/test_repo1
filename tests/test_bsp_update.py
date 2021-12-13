@@ -1938,9 +1938,15 @@ class TestBspUpdate:
             self.__create_model_number_file(path=CommonConst.FW_PCKG_PATH_ON_SDCARD,
                                             content=CommonConst.FILE_MODEL_NUMBER_CONTENT_COMMONUI)
 
-        self.__update_firmware(CommonConst.BOOT_DEVICE_SDCARD, FW_FILE_PATH_ON_FLASH_WO_PACKAGES)
+        self.__update_firmware(CommonConst.BOOT_DEVICE_SDCARD, FW_FILE_PATH_ON_FLASH)
 
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(f"Cleanup   {CommonConst.HW_MANAGER_PACKAGE}"):
+            assert CommonHelper.package_remove(CommonConst.HW_MANAGER_PACKAGE) is True
+
+        with allure.step(f"Cleanup   {CommonConst.SCREENGRABBER_PACKAGE}"):
+            assert CommonHelper.package_remove(CommonConst.SCREENGRABBER_PACKAGE) is True
 
         with allure.step("Check version of the packages. They should not be present in the system"):
             assert self.__get_package_version(CommonRegex.RESULT_HW_MANAGER) is None

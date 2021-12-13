@@ -167,11 +167,13 @@ class CommonConst:
     FW_FILE_NAME_INVALID_SIG = "welbilt-firmware-imx6sxsabresd_invalid_sig.tar"
     TEST_VERSION_MIN = 80000000000000
     TEST_VERSION_MAX = 99999999999999
+    HW_MANAGER_PACKAGE = "hardware-manager"
     HW_MANAGER_NAME = "hardware-manager-1.0-r0_update.tar"
     HW_MANAGER_NAME_NO_PACKAGE = "hardware-manager-1.0-r0_update_no_package.tar"
     HW_MANAGER_NAME_NOT_COMPATIBLE = "hardware-manager-1.0-r0_update_not_compatible.tar"
     HW_MANAGER_NAME_INVALID_SIG = "hardware-manager-1.0-r0_update_invalid_sig.tar"
     HW_MANAGER_NAME_BROKEN = "hardware-manager-1.0-r0_update_broken.tar"
+    SCREENGRABBER_PACKAGE = "screengrabber"
     SCREENGRABBER_NAME = "screengrabber-1.0-r0_update.tar"
     PACKAGE_PATH = "/opt/firmware_manager/packages/"
     HARDWARE_MANAGER_VERSION_PATH = PACKAGE_PATH + "hardware-manager-1.0-r0/version.txt"
@@ -257,3 +259,4 @@ class CommonConst:
     COMMAND_SSHD_SOCKET_START = "systemctl start sshd.socket"
     MEDIA_SERVICE = "/media/service"
     FOUND_FILE = "found"
+    COMMAND_PACKAGE_REMOVE = "opkg remove "

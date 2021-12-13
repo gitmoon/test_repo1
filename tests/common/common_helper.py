@@ -96,6 +96,24 @@ class CommonHelper:
                 return message
 
     @staticmethod
+    def package_remove(package_name):
+        command = f'{CommonConst.COMMAND_PACKAGE_REMOVE}{package_name}'
+        CommonHelper.__debug_cli.flush_incoming_data()
+        CommonHelper.__debug_cli.send_message(command)
+        start_time = time.time()
+        while True:
+            if time.time() - start_time > CommonConst.TIMEOUT_30_SEC:
+                return None
+
+            message = CommonHelper.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC)
+            if not message:
+                continue
+
+            if CliRegexConsts.REGEX_LOGGED_IN2.search(message):
+                print(f"'{package_name}' removed ")
+                return True
+
+    @staticmethod
     def switch_ethernet(state: bool):
         CommonHelper.__debug_cli.flush_incoming_data()
 
