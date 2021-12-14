@@ -164,7 +164,7 @@ class CommonConst:
     BSP_VERSION = "~/jabil/VERSION"
     LAST_SIGNAL_FOR_CORRUPTED_CASE = "forcedFirmwareChecked"
     FW_FILE_NAME = "welbilt-firmware-image-welbilt-common-ui43.tar"
-    FW_FILE_NAME_INVALID_SIG = "welbilt-firmware-imx6sxsabresd_invalid_sig.tar"
+    FW_FILE_NAME_INVALID_SIG = "welbilt-firmware-image-welbilt-common-ui43_invalid_sig.tar"
     TEST_VERSION_MIN = 80000000000000
     TEST_VERSION_MAX = 99999999999999
     HW_MANAGER_PACKAGE = "hardware-manager"
