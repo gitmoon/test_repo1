@@ -5,7 +5,7 @@ from tests.config.config import USB_DEVICE_NAME, TEST_HOST_IP_ADDR, NETWORKING_U
 
 
 class CommonRegex:
-    LINUX_KERNEL_VERSION = re.compile(r"\d\.\d\d\.\d\d-linux4sam-\d\.\d")
+    LINUX_KERNEL_VERSION = re.compile(r"\d\.\d\d\.\d\d-linux4sam-\d\d\d\d\.\d\d")
     TYPE_COMMAND_RESULT = re.compile(r"\w+ is .+")
     FIND_LIBDBUS_RESULT = re.compile(r".+/libdbus.*\.so.*")
     COMMAND_NOT_FOUND = re.compile(r"^-sh: \w+: command not found$")
@@ -89,7 +89,7 @@ class CommonRegex:
     RESULT_HW_MANAGER = re.compile(r"hardware-manager-\d+\.\d+-r\d+")
     RESULT_SCREENGRABBER = re.compile(r"screengrabber-\d+\.\d+-r\d+")
     FW_PCKG_VERSION = re.compile(r"\d{8,}")
-    BAD_LINUX_KERNEL = re.compile(r"Bad Linux ARM zImage magic!")
+    BAD_LINUX_KERNEL = re.compile(r"ERROR: can't get kernel image!")
     LSMOD_ATH10K = re.compile(r"ath10k")
     IW_ERROR = re.compile(r"(Operation not supported)|(Invalid parameter:)")
     IW_LINK_SSID = re.compile(r"SSID: .+")

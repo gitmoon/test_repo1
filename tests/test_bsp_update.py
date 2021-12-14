@@ -3,6 +3,7 @@ import re
 import sys
 import threading
 import time
+import logging
 from builtins import print
 from re import Pattern
 
@@ -25,9 +26,20 @@ from utils.common.cli_regex_consts import CliRegexConsts
 from utils.common.dbus_func_consts import DbusFuncConsts
 from utils.common.dbus_signal_consts import DbusSignalConsts
 
+def InitLogger():
+    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logFormatter)
+    rootLogger = logging.getLogger()
+    rootLogger.addHandler(consoleHandler)
+    rootLogger.setLevel(logging.INFO)
+    return rootLogger
+
 
 @allure.feature("2.26. Firmware Update")
 class TestBspUpdate:
+
+    __logger = InitLogger()
     __debug_cli = DebugCLI()
     __cli_common_util = CliCommonUtil(__debug_cli)
     __cli_dbus_util = CliDbusUtil(__debug_cli)

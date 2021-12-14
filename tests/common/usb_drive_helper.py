@@ -66,7 +66,7 @@ class UsbDriveHelper:
 
             if self.__emulated_folder_list:
                 for folder in self.__emulated_folder_list:
-                    assert CommonHelper.create_folder(self.__flash_drive_path + folder, with_patents=True) is True
+                    assert CommonHelper.create_folder(self.__flash_drive_path + folder[1:], with_patents=True) is True
 
     def remove_emulated_flash_folders(self):
         """
@@ -93,5 +93,5 @@ class UsbDriveHelper:
             if self.__emulated_folder_list:
                 for folder in self.__emulated_folder_list:
                     CommonHelper.remove_file(
-                        self.__flash_drive_path + folder + CommonConst.PREFIX_ALL, forced=True, recursive=True,
+                        self.__flash_drive_path + folder[1:] + CommonConst.PREFIX_ALL, forced=True, recursive=True,
                         timeout=CommonConst.TIMEOUT_30_SEC)
