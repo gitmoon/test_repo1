@@ -1945,6 +1945,7 @@ class TestBspUpdate:
         assert new_partition in old_partition
 
     @allure.story("SW.BSP.UPDATE.181 Firmware Package Update through USB Flash on SD Card, two new packages")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_usb_two_new_packs(self, __run_from_sdcard, __update_fw_to_restore_partition):
         update_state_list = []
 
@@ -2135,6 +2136,7 @@ class TestBspUpdate:
 
     @allure.story("SW.BSP.UPDATE.192 Negative: Firmware Package Update through USB Flash on SD Card,"
         "two packages, one with the same version")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_usb_two_packages_one_with_same_version(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2205,6 +2207,7 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.193 Negative: Firmware Package Update through USB Flash on SD Card, two packages, "
         "one package with missing file")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_usb_two_packages_one_with_missing_file(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2379,6 +2382,7 @@ class TestBspUpdate:
 
     @allure.story(
         "SW.BSP.UPDATE.200 Firmware Package Update through USB Flash on SD Card, suspend and wait 10 minutes to update, two packages")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_usb_with_suspend_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2491,6 +2495,7 @@ class TestBspUpdate:
 
     @allure.story(
         "SW.BSP.UPDATE.220 Firmware Package Update through USB Flash on SD Card, resume to update, two packages")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_usb_with_resume_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2595,6 +2600,7 @@ class TestBspUpdate:
 
     @allure.story(
         "SW.BSP.UPDATE.240 Firmware Package Update through USB Flash on SD Card, reject to update, two packages")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_usb_with_reject_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2651,6 +2657,7 @@ class TestBspUpdate:
 
     @allure.story(
         "SW.BSP.UPDATE.250 Firmware Package Update from Common UI file system on SD Card, two packages")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_sdcard_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2707,6 +2714,7 @@ class TestBspUpdate:
 
     @allure.story(
         "SW.BSP.UPDATE.250.1 Firmware Package Update from Common UI file system on SD Card, two packages (forceUpdate)")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_sdcard_from_sdcard_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2764,6 +2772,7 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.251 Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one with same version")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_sdcard_two_packs_one_with_same_version(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2837,6 +2846,7 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.251.1 Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one with same version (forceUpdate)")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_sdcard_from_sdcard_two_packs_one_with_same_version(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2910,6 +2920,7 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.252 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one package with invalid sig file")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_two_packs_one_with_invalid_sig_file(self, __run_from_sdcard):
         update_state_list = []
 
@@ -2980,6 +2991,7 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.252.1 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one package with invalid sig file (forceUpdate)")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_sdcard_two_packs_one_with_invalid_sig_file(self, __run_from_sdcard):
         update_state_list = []
 
@@ -3050,6 +3062,7 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.253 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one package broken")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_two_packages_one_package_broken(self, __run_from_sdcard):
         update_state_list = []
 
@@ -3121,6 +3134,7 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.253.1 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one package broken (forceUpdate)")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_sdcard_from_two_packages_one_package_broken(self, __run_from_sdcard):
         update_state_list = []
 
@@ -3192,6 +3206,7 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.254 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one not compatible")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_two_packages_one_not_compatible(self, __run_from_sdcard):
         update_state_list = []
 
@@ -3262,6 +3277,7 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.254.1 Negative: Firmware Package Update from Common UI file system on SD Card, "
         "two packages, one not compatible (forceUpdate)")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_sdcard_two_packages_one_not_compatible(self, __run_from_sdcard):
         update_state_list = []
 
@@ -3437,6 +3453,7 @@ class TestBspUpdate:
 
     @allure.story(
         "SW.BSP.UPDATE.270 Firmware Update from Common UI file system on SD Card , suspend and resume to update, two packages")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_sdcard_with_suspend_resume_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
@@ -3506,6 +3523,7 @@ class TestBspUpdate:
 
     @allure.story(
         "SW.BSP.UPDATE.270.1 Firmware Update from Common UI file system on SD Card , suspend and resume to update, two packages (forceUpdate)")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_sdcard_from_sdcard_with_suspend_resume_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
@@ -3681,6 +3699,7 @@ class TestBspUpdate:
 
     @allure.story(
         "SW.BSP.UPDATE.290 Firmware Update from Common UI file system on SD Card, suspend and reject to update, two packages")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_sdcard_with_suspend_reject_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
@@ -3744,6 +3763,7 @@ class TestBspUpdate:
 
     @allure.story(
         "SW.BSP.UPDATE.290.1 Firmware Update from Common UI file system on SD Card, suspend and reject to update, two packages (forceUpdate)")
+    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_sdcard_from_sdcard_with_suspend_reject_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
