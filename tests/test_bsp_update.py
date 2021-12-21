@@ -599,6 +599,9 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_remove_after_detect(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -648,6 +651,9 @@ class TestBspUpdate:
         "SW.BSP.UPDATE.041 Negative: Firmware Update through USB Flash on SD Card, remove USB Flash before signal newFirmwareAvailable")
     def test_fw_update_sdcard_from_usb_remove_before_detect(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -752,6 +758,9 @@ class TestBspUpdate:
                                                   __update_fw_to_restore_partition):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -824,6 +833,9 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_with_suspend(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -865,6 +877,9 @@ class TestBspUpdate:
     @allure.story("SW.BSP.UPDATE.070 Firmware Update through USB Flash on SD Card, suspend and resume to update")
     def test_fw_update_sdcard_from_usb_with_suspend_and_resume(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -912,6 +927,9 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_with_resume(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -954,6 +972,9 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_with_suspend_reject(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -995,6 +1016,9 @@ class TestBspUpdate:
     @allure.story("SW.BSP.UPDATE.100 Firmware Update through USB Flash on SD Card, reject to update")
     def test_fw_update_sdcard_from_usb_with_reject(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -1120,6 +1144,9 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_sdcard(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -1153,6 +1180,9 @@ class TestBspUpdate:
     @allure.story("SW.BSP.UPDATE.120.1 Firmware Update from Common UI file system on SD Card (forceUpdate)")
     def test_fw_force_update_sdcard_from_sdcard(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -1366,6 +1396,9 @@ class TestBspUpdate:
         "SW.BSP.UPDATE.124 Negative: Firmware Update from Common UI file system on SD Card, broken new firmware package")
     def test_fw_update_sdcard_broken_firmware_package(self, __run_from_sdcard, __prepare_for_fw_update):
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -1405,6 +1438,9 @@ class TestBspUpdate:
     @allure.story(
         "SW.BSP.UPDATE.124.1 Negative: Firmware Update from Common UI file system on SD Card, broken new firmware package (forceUpdate)")
     def test_fw_force_update_sdcard_broken_firmware_package(self, __run_from_sdcard, __prepare_for_fw_update):
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -1466,6 +1502,9 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_sdcard_with_suspend(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -1512,6 +1551,9 @@ class TestBspUpdate:
         "SW.BSP.UPDATE.140.1 Firmware Update from Common UI file system on SD Card, suspend and wait 10 minutes to update (forceUpdate)")
     def test_fw_force_update_sdcard_from_sdcard_with_suspend(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -1679,6 +1721,9 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_sdcard_with_resume(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -1725,6 +1770,9 @@ class TestBspUpdate:
     @allure.story("SW.BSP.UPDATE.160.1 Firmware Update from Common UI file system on SD Card, resume to update (forceUpdate)")
     def test_fw_force_update_sdcard_from_sdcard_with_resume(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -1868,6 +1916,9 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_sdcard_with_reject(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -1907,6 +1958,9 @@ class TestBspUpdate:
     @allure.story("SW.BSP.UPDATE.180.1 Firmware Update from Common UI file system on SD Card, reject to update (forceUpdate)")
     def test_fw_force_update_sdcard_from_sdcard_with_reject(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -2386,6 +2440,9 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_usb_with_suspend_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
@@ -2444,6 +2501,9 @@ class TestBspUpdate:
                                                                 ):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
@@ -2499,6 +2559,9 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_usb_with_resume_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
@@ -2553,6 +2616,9 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_usb_with_suspend_reject(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
@@ -2603,6 +2669,9 @@ class TestBspUpdate:
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_usb_with_reject_two_packs(self, __run_from_sdcard):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -2661,6 +2730,9 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -2717,6 +2789,9 @@ class TestBspUpdate:
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_force_update_sdcard_from_sdcard_two_packs(self, __run_from_sdcard):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -3350,6 +3425,9 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_with_suspend(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -3402,6 +3480,9 @@ class TestBspUpdate:
         "SW.BSP.UPDATE.260.1 Firmware Update from Common UI file system on SD Card, suspend and wait 10 minutes to update, one package (forceUpdate)")
     def test_package_force_update_sdcard_from_sdcard_with_suspend(self, __run_from_sdcard):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -3456,6 +3537,9 @@ class TestBspUpdate:
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_sdcard_with_suspend_resume_two_packs(self, __run_from_sdcard):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -3527,6 +3611,9 @@ class TestBspUpdate:
     def test_package_force_update_sdcard_from_sdcard_with_suspend_resume_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -3596,6 +3683,9 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_with_resume(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -3647,6 +3737,9 @@ class TestBspUpdate:
     @allure.story("SW.BSP.UPDATE.280.1 Firmware Update from Common UI file system on SD Card, resume to update, one package (forceUpdate)")
     def test_package_force_update_sdcard_from_sdcard_with_resume(self, __run_from_sdcard):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -3702,6 +3795,9 @@ class TestBspUpdate:
     @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="The test case requires build type \"Development\"")
     def test_package_update_sdcard_from_sdcard_with_suspend_reject_two_packs(self, __run_from_sdcard):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
@@ -3767,6 +3863,9 @@ class TestBspUpdate:
     def test_package_force_update_sdcard_from_sdcard_with_suspend_reject_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -3829,6 +3928,9 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_with_reject(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
@@ -3875,6 +3977,9 @@ class TestBspUpdate:
     @allure.story("SW.BSP.UPDATE.300.1 Firmware Update from Common UI file system on SD Card, reject to update, one package (forceUpdate)")
     def test_package_force_update_sdcard_from_sdcard_with_reject(self, __run_from_sdcard):
         update_state_list = []
+
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
         old_version, old_partition = self.__get_fw_info()
 
