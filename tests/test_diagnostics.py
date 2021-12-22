@@ -31,7 +31,7 @@ class TestDiagnostics:
             assert int(board_temperature) in CommonConst.SYSTEM_TEMPERATURE_RANGE
 
     @allure.story("SW.BSP.DIAGNOSTICS.040 The Linux BSP software shall include 'GDB'")
-    @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="GDB package available only in \"Development\" builds")
+    # @pytest.mark.skipif(TEST_BUILD_TYPE != "Development", reason="GDB package available only in \"Development\" builds")
     def test_system_include_gdb(self):
         with allure.step("Execute command to check if 'gdb’ exists or not: # type gdb"):
             assert CommonHelper.check_package_presence(CommonConst.PACKAGE_GDB) is True

@@ -170,7 +170,8 @@ class TestNetworking:
             assert lease is not None
             ip_address = CommonRegex.IP_ADDRESS.search(lease).group(0)
 
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
+                                                CliRegexConsts.REGEX_LOGGED_IN) is not None
 
             self.__debug_cli.flush_incoming_data()
             self.__debug_cli.send_message(CommonConst.COMMAND_SSHD_SOCKET_START)
@@ -191,9 +192,11 @@ class TestNetworking:
         package_nmcli = CommonConst.COMMAND_NMCLI.rstrip()
         package_iptables = CommonConst.COMMAND_IPTABLES.rstrip()
         with allure.step("Execute command to check ‘nmcli’ exist or not"):
+            time.sleep(CommonConst.TIMEOUT_5_SEC)
             assert CommonHelper.check_package_presence(package_nmcli) is True
 
         with allure.step("Execute command to check ‘nmcli’ version"):
+            time.sleep(CommonConst.TIMEOUT_5_SEC)
             assert CommonHelper.check_package_version(package_nmcli, CommonConst.VERSION_ARGUMENT,
                                                       CommonRegex.NMCLI_VERSION_RESULT)
 

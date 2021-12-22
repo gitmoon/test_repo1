@@ -119,8 +119,6 @@ class TestEthernet:
 
             assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
 
-            time.sleep(CommonConst.TIMEOUT_5_SEC)
-
             with allure.step("Execute command ‘ping’ to remote host"):
                 assert CommonHelper.ping(TEST_HOST_IP_ADDR, CommonConst.TIMEOUT_10_SEC) is True
 
@@ -169,7 +167,7 @@ class TestEthernet:
             self.__debug_cli.flush_incoming_data()
             self.__debug_cli.send_message(CommonConst.COMMAND_IFCONFIG + CommonConst.IFACE_ETH)
             assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, re.compile(
-                f"{CommonConst.HWADDR_STRING}{mac_addr[0]}:{mac_addr[1]}:{mac_addr[2]}:"
+                f"{CommonConst.ETHER_ADDR_STRING}{mac_addr[0]}:{mac_addr[1]}:{mac_addr[2]}:"
                 f"{mac_addr[3]}:{mac_addr[4]}:{mac_addr[5]}")) is not None
 
     @allure.story(

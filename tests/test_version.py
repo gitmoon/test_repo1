@@ -45,7 +45,7 @@ class TestVersion:
         with allure.step("Check ‘Board ID’ value in U-boot's booting message"):
             self.__debug_cli.send_message(CliCommandConsts.COMMAND_REBOOT)
             assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, CommonRegex.BOARD_ID_ON_BOOT) is not None
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, CliRegexConsts.REGEX_LOGIN) is not None
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_2_MIN, CliRegexConsts.REGEX_LOGIN) is not None
             assert self.__cli_common_util.login() is True
 
         with allure.step("Switch to bootloader"):

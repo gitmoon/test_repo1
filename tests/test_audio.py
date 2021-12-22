@@ -20,9 +20,9 @@ class TestAudio:
     assert __cli_common_util is not None
 
     @allure.story("SW.BSP.AUDIO.010 The Linux BSP software shall include drivers for the audio amplifier "
-                  "(part# TAS5756MDCAR).")
+                  "(part# TAS5720MDCAR).")
     def test_tas(self):
-        with allure.step("Execute below command to check audio amplifier driver: dmesg | grep tas5756-audio"):
+        with allure.step("Execute below command to check audio amplifier driver: dmesg | grep tas5720-audio"):
             result = CommonHelper.find_matches(CommonConst.COMMAND_DMESG + CommonConst.DMESG_GREP_TAS_AUDIO,
                                                CommonRegex.DMESG_RESULT_TAS_AUDIO, CommonConst.TIMEOUT_10_SEC)
             assert result is not None and len(result) > 0

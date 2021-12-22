@@ -20,6 +20,6 @@ CAN_MSG_TIMEOUT = 10
 # RS-485 config
 
 # Inter-character timeout. Helps to avoid inter-frame gaps
-RS_485_INTERCHAR_TIMEOUT = 0.1
+RS_485_INTERCHAR_TIMEOUT = 10
 # Incoming message receiving timeout.
-RS_485_MSG_TIMEOUT = 5
+RS_485_MSG_TIMEOUT = 10

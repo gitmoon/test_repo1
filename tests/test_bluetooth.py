@@ -14,7 +14,7 @@ class TestBluetooth:
                   "support the controls for Bluetooth communication and comply with Bluetooth v4.0+LE, or "
                   "later standards. (part# Jorjin WG7833-B0)")
     def test_btwilink(self):
-        with allure.step("Execute ‘lsmod’ command to check if “btwilink” driver exists or not"):
-            result = CommonHelper.find_matches(CommonConst.COMMAND_LSMOD + CommonConst.LSMOD_GREP_BTWILINK,
+        with allure.step("Execute ‘lsmod’ command to check if “QCA” driver exists or not"):
+            result = CommonHelper.find_matches(CommonConst.COMMAND_DMESG + CommonConst.LSMOD_GREP_QCA,
                                                CommonRegex.LSMOD_BTWILINK, CommonConst.TIMEOUT_10_SEC)
             assert result is not None and len(result) > 0

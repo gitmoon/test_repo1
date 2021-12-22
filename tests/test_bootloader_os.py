@@ -44,7 +44,7 @@ class TestBootloaderAndOS:
             self.__debug_cli.send_message(CliCommandConsts.COMMAND_BOOT)
 
         with allure.step("Check the console terminal output"):
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, CliRegexConsts.REGEX_LOGIN) is not None
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_2_MIN, CliRegexConsts.REGEX_LOGIN) is not None
             self.__cli_common_util.wait_for_links_ready_after_start()
 
         with allure.step("Type login: root, password: welbiltUser!2228 to login"):
@@ -68,5 +68,5 @@ class TestBootloaderAndOS:
         with allure.step("Execute below command to reboot the device: # reboot"):
             self.__debug_cli.flush_incoming_data()
             self.__debug_cli.send_message(CliCommandConsts.COMMAND_REBOOT)
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_60_SEC, CliRegexConsts.REGEX_LOGIN) is not None
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_2_MIN, CliRegexConsts.REGEX_LOGIN) is not None
             self.__cli_common_util.wait_for_links_ready_after_start()

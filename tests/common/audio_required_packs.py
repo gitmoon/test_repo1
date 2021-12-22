@@ -12,7 +12,6 @@ class RequiredPacksForAudio:
                                ("cspctl", CommonConst.HELP_ARGUMENT),
                                ("hda-verb", CommonConst.HELP_ARGUMENT),
                                ("hdajacksensetest", CommonConst.HELP_ARGUMENT),
-                               ("hwmixvolume", CommonConst.HELP_ARGUMENT),
                                ("mixartloader", CommonConst.HELP_ARGUMENT),
                                ("pcxhrloader", CommonConst.HELP_ARGUMENT),
                                ("sbiload", CommonConst.HELP_ARGUMENT),

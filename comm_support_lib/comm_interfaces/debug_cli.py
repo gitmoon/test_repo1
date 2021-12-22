@@ -15,9 +15,9 @@ class DebugCLI(metaclass=MetaSingleton):
     __INCOMING_DATA_SPLIT_REGEX = re.compile(r'\r\n|\r')
     __DEBUG = True
 
-    __REGEX_LOGGED_IN: Pattern = re.compile(r'root@imx6sxsabresd:.+# $')
+    __REGEX_LOGGED_IN: Pattern = re.compile(r'root@welbilt-common-ui43:.+# $')
     __REGEX_UBOOT_CLI: Pattern = re.compile(r"=> $")
-    __REGEX_LOGIN: Pattern = re.compile(r'imx6sxsabresd login: $')
+    __REGEX_LOGIN: Pattern = re.compile(r'welbilt-common-ui43 login: $')
     __REGEX_PASSWORD: Pattern = re.compile(r"Password: $")
 
     def __log_incoming_data(self, data_list):

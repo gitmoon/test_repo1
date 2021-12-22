@@ -11,7 +11,7 @@ CLI_COMMON_REBOOT_TIMEOUT = 120
 # Timeout for waiting for successful logout from the board CLI
 CLI_COMMON_NORMAL_MODE_TIMEOUT = 120
 #
-CLI_COMMON_NETWORK_READY_TIMEOUT = 40
+CLI_COMMON_NETWORK_READY_TIMEOUT = 50
 
 # CLI D-Bus Util config
 

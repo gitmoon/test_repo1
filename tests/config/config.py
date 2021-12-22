@@ -3,6 +3,7 @@ Common configuration constants
 """
 # could be "Development", "Production" or "Slim"
 TEST_BUILD_TYPE = "Production"
+# TEST_BUILD_TYPE = "Development"
 
 # required for "2.7. Reset", "2.8. Ethernet", "2.9. Wi-Fi", "2.10. Networking"
 TEST_HOST_IP_ADDR = "109.86.196.215"
@@ -53,8 +54,8 @@ PACKAGE_FILE_PATH_ON_FLASH = f"{FW_SOURCE_PATH}/package/"
 """
 2.27. U-boot Bootloader
 """
-BOARD_ID = 2
-PANEL_ID = 7  # 7 for 7-inch board and 6 for 10-inch board
-BOARD_IP_ADDR = "0.0.0.0"
-INCORRECT_IP_ADDR = "0.0.0.0"
+BOARD_ID = 4  #
+PANEL_ID = 1  # 1-premium panel, 0-base panel
+BOARD_IP_ADDR = "192.168.1.171"
+INCORRECT_IP_ADDR = "192.168.61.250"
 

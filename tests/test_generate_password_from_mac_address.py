@@ -3,6 +3,7 @@ import sys
 import allure
 import pytest
 from time import time
+import time
 
 from comm_support_lib.comm_interfaces.debug_cli import DebugCLI
 from tests.common.common_const import CommonConst
@@ -92,8 +93,14 @@ class TestGeneratePasswordFromMacAddress:
             self.__recreate_cli_common_util(updated_user_name, updated_user_password)
 
         with allure.step("Log out and log in as 'root'"):
-            assert self.__cli_common_util.logout() is True
-            assert self.__cli_common_util.login() is True
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_LOGOUT)
+            time.sleep(CommonConst.TIMEOUT_10_SEC)
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_BOOT)
+            time.sleep(CommonConst.TIMEOUT_2_MIN)
+            self.__debug_cli.send_message(updated_user_name)
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_EMPTY)
+            self.__debug_cli.send_message(updated_user_password)
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_EMPTY)
             whoami = self.__whoami()
             assert CommonConst.USER_ROOT in whoami
 
@@ -122,23 +129,13 @@ class TestGeneratePasswordFromMacAddress:
             self.__recreate_cli_common_util(updated_user_name, updated_user_password)
 
         with allure.step("Log out and log in as 'welbilt'"):
-            assert self.__cli_common_util.logout() is True
-            assert self.__cli_common_util.login() is True
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_LOGOUT)
+            time.sleep(CommonConst.TIMEOUT_10_SEC)
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_BOOT)
+            time.sleep(CommonConst.TIMEOUT_60_SEC)
+            self.__debug_cli.send_message(updated_user_name)
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_EMPTY)
+            self.__debug_cli.send_message(updated_user_password)
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_EMPTY)
             whoami = self.__whoami()
             assert CommonConst.USER_WELBILT in whoami
-
-        with allure.step("Generate password from MAC address for user 'root'"):
-            root_password = self.__cli_common_util.get_password_from_mac_address(mac_address)
-            assert root_password is not None
-
-        with allure.step("Update 'root' credentials"):
-            self.__cli_common_util.update_login_credentials(user=CommonConst.USER_ROOT, password=root_password)
-
-        with allure.step("Read current user name and password"):
-            updated_user_name, updated_user_password = self.__current_user_credentials()
-            assert updated_user_name in CommonConst.USER_ROOT
-            assert updated_user_password in root_password
-            self.__recreate_cli_common_util(updated_user_name, updated_user_password)
-
-        with allure.step("Log in as root"):
-            self.__login_as_root(root_password)

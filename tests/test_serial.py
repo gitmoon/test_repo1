@@ -17,7 +17,7 @@ from comm_support_lib.common.serial_iface_parity_consts import SerialIfaceParity
 from tests.common.common_const import CommonConst
 from tests.common.common_helper import CommonHelper
 from tests.common.common_regex import CommonRegex
-from tests.config.config import RS_485_PORT_FULL_DUPLEX, RS_485_PORT_HALF_DUPLEX
+from tests.config.config import RS_485_PORT_HALF_DUPLEX
 from utils.cli_common_util import CliCommonUtil
 from utils.common.cli_command_consts import CliCommandConsts
 from utils.common.cli_regex_consts import CliRegexConsts
@@ -27,8 +27,6 @@ from utils.common.cli_regex_consts import CliRegexConsts
 class TestSerial:
     __debug_cli = DebugCLI()
     __cli_common_util = CliCommonUtil(__debug_cli)
-    __rs485_full_duplex = RS485(RS_485_PORT_FULL_DUPLEX, CommonConst.RS485_DEFAULT_BAUD,
-                                SerialIfaceParityConsts.PARITY_NONE, 1)
     __rs485_half_duplex = RS485(RS_485_PORT_HALF_DUPLEX, CommonConst.RS485_DEFAULT_BAUD,
                                 SerialIfaceParityConsts.PARITY_NONE, 1)
 
@@ -52,25 +50,11 @@ class TestSerial:
         rtsaftersend_state = ""
 
         self.__debug_cli.flush_incoming_data()
-        if is_full_duplex:
-            self.__debug_cli.send_message(
-                f"{CommonConst.COMMAND_ECHO} {CommonConst.RS485_FULL_DUPLEX} > {CommonConst.SYS_FS_RS485_DUPLEX_VALUE}")
-        else:
-            self.__debug_cli.send_message(
-                f"{CommonConst.COMMAND_ECHO} {CommonConst.RS485_HALF_DUPLEX} > {CommonConst.SYS_FS_RS485_DUPLEX_VALUE}")
-        assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
-
         if not rtsonsend:
             rtsonsend_state = "-"
         if not rtsaftersend:
             rtsaftersend_state = "-"
 
-        self.__debug_cli.flush_incoming_data()
-        self.__debug_cli.send_message(
-            f"{CommonConst.BUSYBOX_STTY_F}{CommonConst.TTY_RS485} {CommonConst.BUSYBOX_STTY_ARGUMENT_RS485} "
-            f"{rtsonsend_state}{CommonConst.BUSYBOX_STTY_ARGUMENT_RTSONSEND} {rtsaftersend_state}"
-            f"{CommonConst.BUSYBOX_STTY_ARGUMENT_RTSAFTERSEND}")
-        assert self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
         self.__debug_cli.send_message(
             f"{CommonConst.STTY_F}{CommonConst.TTY_RS485} {CommonConst.STTY_ARGUMENT_SPEED} {str(speed)}")
         assert self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
@@ -81,13 +65,6 @@ class TestSerial:
         assert self.__cli_common_util.reboot() is True
         assert self.__cli_common_util.login() is True
         self.__debug_cli.flush_incoming_data()
-        self.__debug_cli.send_message(
-            f"{CommonConst.COMMAND_ECHO} {CommonConst.SYS_FS_RS485_DUPLEX_PIN} > {CommonConst.SYS_FS_GPIO_EXPORT}")
-        assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
-        self.__debug_cli.send_message(
-            f"{CommonConst.COMMAND_ECHO} {CommonConst.SYS_FS_DIRECTION_OUT} > "
-            f"{CommonConst.SYS_FS_RS485_DUPLEX_DIRECTION}")
-        assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
 
     @allure.story("SW.BSP.SERIAL.010 The Linux BSP software shall provide an UART console serial port driver and "
                   "support a login session for diagnostics and debugging.")
@@ -99,47 +76,18 @@ class TestSerial:
     @allure.story("SW.BSP.SERIAL.030 The Linux BSP software shall support single RS-485 serial communication ports. "
                   "(part# MAX13089EASD+T)")
     def test_support_rs485_port(self):
-        with allure.step("Execute command: ls /dev/ttyS1"):
+        with allure.step("Execute command: ls /dev/ttyS3"):
             self.__debug_cli.send_message(CommonConst.COMMAND_LS + CommonConst.TTY_RS485)
             assert self.__debug_cli.get_message(CommonConst.TIMEOUT_20_SEC,
                                                 re.compile(rf"^{CommonConst.TTY_RS485}")) is not None
 
-    @allure.story("SW.BSP.SERIAL.040 The The RS-485 controls shall be operable as either half duplex (two wire) or "
+    @allure.story("SW.BSP.SERIAL.040 The The RS-485 controls shall be operable as either "
                   "full duplex (four wire) under software control")
     def test_rs485_duplex(self):
-        with allure.step("Set RS-485 to full duplex mode"):
-            self.__configure_rs485(True, CommonConst.RS485_DEFAULT_BAUD, True, True)
-
-        with allure.step("Execute command: # cat  /dev/ttymxc0"):
-            self.__debug_cli.flush_incoming_data()
-            self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.TTY_RS485)
-            # wait "cat" command to be executed by the system
-            time.sleep(CommonConst.TIMEOUT_2_SEC)
-
-        with allure.step("Connect to the RS-485 converter and send test phrase"):
-            self.__rs485_full_duplex.send_message((CommonConst.TEST_PHRASE + CommonConst.RS485_EOL).encode())
-
-        with allure.step("Receive the test phrase from the board side"):
-            test_result = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, re.compile(CommonConst.TEST_PHRASE))
-
-        with allure.step("Close cat and check received data"):
-            self.__debug_cli.send_message(CliCommandConsts.COMMAND_CTRL_C)
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC, CliRegexConsts.REGEX_LOGGED_IN) is not None
-            assert test_result is not None
-            assert CommonConst.TEST_PHRASE in test_result
-
-        with allure.step("Check send/receive data in full duplex mode"):
-            self.__rs485_full_duplex.flush_incoming_data()
-            self.__debug_cli.send_message(
-                f"{CommonConst.COMMAND_ECHO}{CommonConst.TEST_PHRASE} > {CommonConst.TTY_RS485}")
-            test_result_bytes: bytes = self.__rs485_full_duplex.get_message(CommonConst.TIMEOUT_10_SEC)
-            assert test_result_bytes is not None
-            assert CommonConst.TEST_PHRASE in test_result_bytes.decode("utf-8", "ignore")
-
         with allure.step("Set RS-485 to half duplex mode"):
             self.__configure_rs485(False, CommonConst.RS485_DEFAULT_BAUD, True, False)
 
-        with allure.step("Execute command: # cat  /dev/ttymxc0"):
+        with allure.step("Execute command: # cat  /dev/ttyS3s"):
             self.__debug_cli.flush_incoming_data()
             self.__debug_cli.send_message(CommonConst.COMMAND_CAT + CommonConst.TTY_RS485)
             # wait "cat" command to be executed by the system
@@ -173,14 +121,14 @@ class TestSerial:
     def test_rs485_baud_rate(self, baud_rate):
         with allure.step("Execute command to check if 'setserial' exists or not"):
             self.__configure_rs485(True, baud_rate, True, True)
-            self.__rs485_full_duplex.update_serial_config(baud_rate, SerialIfaceParityConsts.PARITY_NONE, 1)
+            self.__rs485_half_duplex.update_serial_config(baud_rate, SerialIfaceParityConsts.PARITY_NONE, 1)
 
-            self.__rs485_full_duplex.flush_incoming_data()
+            self.__rs485_half_duplex.flush_incoming_data()
             self.__debug_cli.send_message(
-                f"{CommonConst.COMMAND_ECHO}{CommonConst.TEST_PHRASE} > {CommonConst.TTY_RS485}")
-            test_result_bytes: bytes = self.__rs485_full_duplex.get_message(CommonConst.TIMEOUT_10_SEC)
+                f"{CommonConst.COMMAND_ECHO}{CommonConst.TEST_PHRASE_SHORT} > {CommonConst.TTY_RS485}")
+            test_result_bytes: bytes = self.__rs485_half_duplex.get_message(CommonConst.TIMEOUT_10_SEC)
             assert test_result_bytes is not None
-            assert CommonConst.TEST_PHRASE in test_result_bytes.decode("utf-8", "ignore")
+            assert CommonConst.TEST_PHRASE_SHORT in test_result_bytes.decode("utf-8", "ignore")
 
     @allure.story("SW.BSP.SERIAL.080 The Linux BSP software shall include 'setserial'")
     def test_system_include_setserial(self):

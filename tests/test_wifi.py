@@ -12,10 +12,8 @@ from comm_support_lib.comm_interfaces.debug_cli import DebugCLI
 from tests.common.common_const import CommonConst
 from tests.common.common_helper import CommonHelper
 from tests.common.common_regex import CommonRegex
-from tests.common.wifi_channels import WifiChannels
 from tests.config.config import WIFI_PASS, WIFI_SSID, TEST_HOST_IP_ADDR
 from utils.cli_common_util import CliCommonUtil
-from utils.common.cli_regex_consts import CliRegexConsts
 
 
 @allure.feature("2.9. Wi-Fi")
@@ -27,11 +25,7 @@ class TestWifi:
     assert __cli_common_util is not None
 
     __TEST_CASE_150_PARAM_LIST = [
-        (CommonConst.PACKAGE_WPA_SUPPLICANT, ""),
-        (CommonConst.COMMAND_IWCONFIG.rstrip(), CommonConst.HELP_ARGUMENT),
-        (CommonConst.COMMAND_IWLIST.rstrip(), CommonConst.HELP_ARGUMENT),
-        (CommonConst.PACKAGE_IWSPY, CommonConst.HELP_ARGUMENT),
-        (CommonConst.PACKAGE_IWPRIV, CommonConst.HELP_ARGUMENT)]
+        (CommonConst.PACKAGE_WPA_SUPPLICANT, "")]
 
     @pytest.fixture(scope='class', autouse=True)
     def __prepare_test_section(self):
@@ -92,7 +86,7 @@ class TestWifi:
             assert CommonHelper.set_wlan_tx_power(CommonConst.IW_POWER_1DBM) is True
 
         with allure.step("Get the wlan config"):
-            search_result = CommonHelper.find_matches(CommonConst.COMMAND_IWCONFIG + CommonConst.IFACE_WIFI,
+            search_result = CommonHelper.find_matches(CommonConst.COMMAND_IWCONFIG + CommonConst.COMMAND_WLAN0_INFO,
                                                       CommonRegex.IW_POWER_1DBM, CommonConst.TIMEOUT_10_SEC)
             assert search_result is not None and len(search_result) > 0
 
@@ -103,7 +97,7 @@ class TestWifi:
             assert CommonHelper.set_wlan_tx_power(CommonConst.IW_POWER_15DBM) is True
 
         with allure.step("Get the wlan config"):
-            search_result = CommonHelper.find_matches(CommonConst.COMMAND_IWCONFIG + CommonConst.IFACE_WIFI,
+            search_result = CommonHelper.find_matches(CommonConst.COMMAND_IWCONFIG + CommonConst.COMMAND_WLAN0_INFO,
                                                       CommonRegex.IW_POWER_15DBM, CommonConst.TIMEOUT_10_SEC)
             assert search_result is not None and len(search_result) > 0
 
@@ -114,7 +108,7 @@ class TestWifi:
             assert CommonHelper.set_wlan_tx_power(CommonConst.IW_POWER_20DBM) is True
 
         with allure.step("Get the wlan config"):
-            search_result = CommonHelper.find_matches(CommonConst.COMMAND_IWCONFIG + CommonConst.IFACE_WIFI,
+            search_result = CommonHelper.find_matches(CommonConst.COMMAND_IWCONFIG + CommonConst.COMMAND_WLAN0_INFO,
                                                       CommonRegex.IW_POWER_20DBM, CommonConst.TIMEOUT_10_SEC)
             assert search_result is not None and len(search_result) > 0
 

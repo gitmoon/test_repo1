@@ -44,6 +44,7 @@ class TestUboot:
     def __cleanup_env_variable(self):
         yield
         self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_ENV_DELETE + CommonConst.TEST_ENV_VAR_NAME)
+        time.sleep(CommonConst.TIMEOUT_5_SEC)
         self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_SAVEENV)
         #It is necessary to have time to execute the command "save"
         time.sleep(CommonConst.TIMEOUT_2_SEC)
@@ -99,47 +100,54 @@ class TestUboot:
             assert INCORRECT_IP_ADDR in message, f"Ping IP Address " \
                                                              f"{INCORRECT_IP_ADDR} did not fail"
 
-    @pytest.mark.parametrize("i2c_dev_name, i2c_dev_id", [("eeprom", CommonConst.I2C_DEV_EEPROM),
-                                                          ("fram", CommonConst.I2C_DEV_FRAM)])
-    @allure.story("SW.BSP.UBOOT.020, SW.BSP.UBOOT.030 Verify the U-boot bootloader eeprom and fram read/write")
-    def test_uboot_eeprom_fram(self, i2c_dev_name, i2c_dev_id):
-        with allure.step(f"Set current i2c device to {i2c_dev_name}"):
-            self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_DEV + i2c_dev_id)
+    @allure.story("SW.BSP.UBOOT.020 Verify the U-boot bootloader eeprom read/write")
+    def test_uboot_eeprom(self):
+        with allure.step(f"Set current i2c device to"):
+            self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_DEV + CommonConst.I2C_DEV_EEPROM)
+            # time.sleep(CommonConst.TIMEOUT_5_SEC)
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_DEV)
-            message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
-                                                   CommonRegex.UBOOT_CURRENT_I2C_DEV)
-            current_i2c_dev = int(message.lstrip(CommonConst.CURRENT_I2C_DEV))
-            assert current_i2c_dev == int(i2c_dev_id), f"Current I2C bus device {current_i2c_dev} " \
-                                                       f"is not {i2c_dev_id}"
+            time.sleep(CommonConst.TIMEOUT_5_SEC)
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
+                                                CommonRegex.UBOOT_CURRENT_I2C_DEV) is not None
 
-        with allure.step(f"Read the data from {i2c_dev_name}"):
+        with allure.step(f"Read the data from"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_MD)
-            message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
-                                                   CommonRegex.UBOOT_I2C_BUS_READ)
-            message_list = message.split(" ")
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
+                                                   CommonRegex.UBOOT_I2C_BUS_READ) is not None
 
-        with allure.step(f"Write the data to the {i2c_dev_name}"):
-            data_to_write: str
-            if message_list[1] != CommonConst.HEX_AA:
-                data_to_write = CommonConst.HEX_AA
-            else:
-                data_to_write = CommonConst.HEX_BB
-            self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_MW + data_to_write)
+        with allure.step(f"Write the data to the aa"):
+            self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_MW + CommonConst.HEX_AA)
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_CTRL_C)
+            time.sleep(CommonConst.TIMEOUT_10_SEC)
 
-        with allure.step(f"Read the data from {i2c_dev_name}"):
+        with allure.step(f"Read the data from aa"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_MD)
-            message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
-                                                   CommonRegex.UBOOT_I2C_BUS_READ)
-            message_list_new = message.split(" ")
-            assert message_list_new[1] == data_to_write, f"Data '{data_to_write}' that was written to {i2c_dev_name} " \
-                                                         f"is '{message_list_new[1]}'"
-            assert message_list_new[2] == message_list[2], f"Data '{message_list[2]}' on {i2c_dev_name} " \
-                                                           f"was accidentally changed to '{message_list_new[2]}'"
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
+                                                   CommonRegex.UBOOT_I2C_BUS_READ_AA) is not None
+
+        with allure.step(f"Write the data to the bb"):
+            self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_MW + CommonConst.HEX_BB)
+            self.__debug_cli.send_message(CliCommandConsts.COMMAND_CTRL_C)
+            time.sleep(CommonConst.TIMEOUT_10_SEC)
+
+        with allure.step(f"Read the data from aa"):
+            self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_MD)
+            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
+                                                   CommonRegex.UBOOT_I2C_BUS_READ_BB) is not None
 
     @allure.story("SW.BSP.UBOOT.040, SW.BSP.UBOOT.050 Verify the U-boot bootloader SD Card read/write")
     def test_uboot_sdcard(self, __cleanup_env_variable, __restore_boot_mode):
         with allure.step("Reboot and stop at U-boot"):
             assert self.__cli_common_util.switch_to_bootloader(reboot_command=CliCommandConsts.COMMAND_RESET) is True
+
+        with allure.step(f"Delete the variable '{CommonConst.TEST_ENV_VAR_NAME}'"):
+            self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_ENV_DELETE + CommonConst.TEST_ENV_VAR_NAME)
+
+        with allure.step(f"Save environment variables to SD Card"):
+            self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_SAVEENV)
+            message = self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
+                                                   CommonRegex.UBOOT_SAVEENV_DONE)
+            assert message is not None, "Saving environment variables failed"
 
         with allure.step("Print the environment variables"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_PRINTENV + CommonConst.TEST_ENV_VAR_NAME)

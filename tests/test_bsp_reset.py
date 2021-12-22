@@ -45,7 +45,7 @@ class TestBootloaderAndOS:
         with allure.step("Execute command: # echo b > /proc/sysrq-trigger"):
             self.__debug_cli.send_message(CommonConst.COMMAND_ECHO + CommonConst.SET_SYSRQ_TRIGG)
             time.sleep(CommonConst.TIMEOUT_2_SEC)
-            time.sleep(CommonConst.TIMEOUT_4_MIN)
+            time.sleep(CommonConst.TIMEOUT_2_MIN)
 
         with allure.step("Push empty command to the terminal"):
             self.__debug_cli.send_message(CliCommandConsts.COMMAND_EMPTY)

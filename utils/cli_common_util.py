@@ -159,6 +159,9 @@ class CliCommonUtil:
                 self.__start_watching_network_links_state()
             result = self.__perform_command(CliCommandConsts.COMMAND_CTRL_C, self.__COMMAND_RESPONSE_TIMEOUT,
                                             [CliRegexConsts.REGEX_LOGGED_IN, CliRegexConsts.REGEX_LOGIN])
+
+            time.sleep(CommonConst.TIMEOUT_20_SEC)
+
             if result is None:
                 print("login() no response after COMMAND_CTRL_C", file=sys.stderr)
                 return False
