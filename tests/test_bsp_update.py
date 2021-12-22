@@ -3,6 +3,7 @@ import re
 import sys
 import threading
 import time
+import logging
 from builtins import print
 from re import Pattern
 
@@ -25,9 +26,20 @@ from utils.common.cli_regex_consts import CliRegexConsts
 from utils.common.dbus_func_consts import DbusFuncConsts
 from utils.common.dbus_signal_consts import DbusSignalConsts
 
+def InitLogger():
+    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logFormatter)
+    rootLogger = logging.getLogger()
+    rootLogger.addHandler(consoleHandler)
+    rootLogger.setLevel(logging.INFO)
+    return rootLogger
+
 
 @allure.feature("2.26. Firmware Update")
 class TestBspUpdate:
+
+    __logger = InitLogger()
     __debug_cli = DebugCLI()
     __cli_common_util = CliCommonUtil(__debug_cli)
     __cli_dbus_util = CliDbusUtil(__debug_cli)
@@ -228,11 +240,6 @@ class TestBspUpdate:
         self.__modify_fw_version(self.__get_random_test_version())
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            self.__stop_polling_thread()
-            self.__cli_dbus_util.clear_signal_list()
-            assert CommonHelper.copy_file(fw_path + fw_name, CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             self.__cli_dbus_util.clear_subscription_list()
@@ -242,6 +249,11 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            self.__stop_polling_thread()
+            self.__cli_dbus_util.clear_signal_list()
+            assert CommonHelper.copy_file(fw_path + fw_name, CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
@@ -336,6 +348,16 @@ class TestBspUpdate:
                 return new_version, new_partition, alternate_version
         return new_version, new_partition
 
+    def __get_alt_partition(self):
+        new_partition = self.__cli_dbus_util.run_method(DbusFuncConsts.GET_CURR_PARTITION)
+        if new_partition == 'A':
+            return 'B'
+        elif new_partition == 'B':
+            return 'A'
+        else:
+            return CommonConst.UNDEFINED
+
+
     def __create_model_number_file(self, path: str = CommonConst.FW_PCKG_PATH_ON_SDCARD,
                                    content: str = CommonConst.FILE_MODEL_NUMBER_CONTENT_COMMONUI):
         with allure.step(f"Write {content} to {path}."):
@@ -369,16 +391,16 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the usb storage device and the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\""
                 " and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the usb storage device and the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
 
         with allure.step("Emulate USB flash drive plugging in"):
             self.__usb_flash.emulate_flash_start()
@@ -442,16 +464,16 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the usb storage device and the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\""
                 " and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the usb storage device and the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
 
         with allure.step("Emulate USB flash drive plugging in"):
             self.__usb_flash.emulate_flash_start()
@@ -499,16 +521,16 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the usb storage device and the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\""
                 " and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the usb storage device and the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
 
         with allure.step("Emulate USB flash drive plugging in"):
             self.__usb_flash.emulate_flash_start()
@@ -540,16 +562,16 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the usb storage device and the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\""
                 " and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the usb storage device and the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
 
         with allure.step("Emulate USB flash drive plugging in"):
             self.__usb_flash.emulate_flash_start()
@@ -577,16 +599,19 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_remove_after_detect(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the usb storage device and the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the usb storage device and the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
 
         with allure.step("Connect USB flash to Common UI board and wait 3 minutes"):
             self.__usb_flash.emulate_flash_start()
@@ -627,16 +652,19 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_remove_before_detect(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the usb storage device and the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the usb storage device and the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
 
         with allure.step("Connect USB flash to Common UI board"):
             self.__usb_flash.emulate_flash_start()
@@ -692,16 +720,16 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the usb storage device and the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_MISS_FILE + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\","
                 "\"newFirmwareAvailable\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the usb storage device and the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_MISS_FILE + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
 
         with allure.step("Connect USB flash to Common UI board"):
             self.__usb_flash.emulate_flash_start()
@@ -730,17 +758,20 @@ class TestBspUpdate:
                                                   __update_fw_to_restore_partition):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the usb storage device and the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_BAD_KERNEL + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the usb storage device and the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_BAD_KERNEL + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
 
         with allure.step("Emulate USB flash and wait 3 minutes"):
             self.__usb_flash.emulate_flash_start()
@@ -802,17 +833,20 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_with_suspend(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
+            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
 
         with allure.step("Emulate USB flash drive plugging in"):
             self.__usb_flash.emulate_flash_start()
@@ -844,17 +878,20 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_with_suspend_and_resume(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
+            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
 
         with allure.step("Emulate USB flash drive plugging in"):
             self.__usb_flash.emulate_flash_start()
@@ -890,17 +927,20 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_with_resume(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
+            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
 
         with allure.step("Emulate USB flash drive plugging in"):
             self.__usb_flash.emulate_flash_start()
@@ -932,17 +972,20 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_with_suspend_reject(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
+            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
 
         with allure.step("Emulate USB flash drive plugging in"):
             self.__usb_flash.emulate_flash_start()
@@ -963,7 +1006,7 @@ class TestBspUpdate:
             self.__usb_flash.emulate_flash_stop()
 
         with allure.step("Reboot the board"):
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_LOGIN) is not None
+            assert self.__cli_common_util.reboot() is True
             assert self.__cli_common_util.login() is True
 
         new_version, new_partition = self.__get_fw_info()
@@ -974,17 +1017,20 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_usb_with_reject(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_FIRMWARE_USB_PATH) is True
+            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_fw_available[-1])
 
         with allure.step("Emulate USB flash drive plugging in"):
             self.__usb_flash.emulate_flash_start()
@@ -1017,10 +1063,6 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_CORRUPTED + CommonConst.FW_FILE_NAME_INVALID_SIG,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
@@ -1028,6 +1070,10 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_CORRUPTED + CommonConst.FW_FILE_NAME_INVALID_SIG,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(
@@ -1060,10 +1106,6 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_CORRUPTED + CommonConst.FW_FILE_NAME_INVALID_SIG,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
@@ -1071,6 +1113,10 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_CORRUPTED + CommonConst.FW_FILE_NAME_INVALID_SIG,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(
@@ -1098,18 +1144,21 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_sdcard(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
@@ -1132,18 +1181,21 @@ class TestBspUpdate:
     def test_fw_force_update_sdcard_from_sdcard(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -1175,11 +1227,6 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
@@ -1187,6 +1234,11 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
@@ -1221,11 +1273,6 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
@@ -1233,6 +1280,11 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.update_fw_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -1264,10 +1316,6 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
@@ -1275,6 +1323,10 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(
@@ -1307,10 +1359,6 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
@@ -1318,6 +1366,10 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(
@@ -1344,11 +1396,10 @@ class TestBspUpdate:
         "SW.BSP.UPDATE.124 Negative: Firmware Update from Common UI file system on SD Card, broken new firmware package")
     def test_fw_update_sdcard_broken_firmware_package(self, __run_from_sdcard, __prepare_for_fw_update):
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_CORRUPTED + CommonConst.HW_MANAGER_NAME_BROKEN,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
@@ -1357,6 +1408,10 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_CORRUPTED + CommonConst.HW_MANAGER_NAME_BROKEN,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(
@@ -1371,8 +1426,9 @@ class TestBspUpdate:
             assert CommonConst.BOOL_FALSE in self.__debug_cli.get_message(
                 CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_DBUS_RESULT_BOOL)
 
-        with allure.step("Wait till the board to be rebooted and log in"):
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_LOGIN) is not None
+        with allure.step("Reboot the system"):
+            self.__cli_dbus_util.clear_subscription_list()
+            assert self.__cli_common_util.reboot() is True
             assert self.__cli_common_util.login() is True
 
         new_version, new_partition = self.__get_fw_info()
@@ -1383,11 +1439,10 @@ class TestBspUpdate:
         "SW.BSP.UPDATE.124.1 Negative: Firmware Update from Common UI file system on SD Card, broken new firmware package (forceUpdate)")
     def test_fw_force_update_sdcard_broken_firmware_package(self, __run_from_sdcard, __prepare_for_fw_update):
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_CORRUPTED + CommonConst.HW_MANAGER_NAME_BROKEN,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
@@ -1396,6 +1451,10 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_CORRUPTED + CommonConst.HW_MANAGER_NAME_BROKEN,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(
@@ -1410,8 +1469,9 @@ class TestBspUpdate:
             assert CommonConst.BOOL_FALSE in self.__debug_cli.get_message(
                 CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_DBUS_RESULT_BOOL)
 
-        with allure.step("Wait till the board to be rebooted and log in"):
-            assert self.__debug_cli.get_message(CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_LOGIN) is not None
+        with allure.step("Reboot the system"):
+            self.__cli_dbus_util.clear_subscription_list()
+            assert self.__cli_common_util.reboot() is True
             assert self.__cli_common_util.login() is True
 
         new_version, new_partition = self.__get_fw_info()
@@ -1442,19 +1502,22 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_sdcard_with_suspend(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list,
-                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list,
+                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
@@ -1489,19 +1552,22 @@ class TestBspUpdate:
     def test_fw_force_update_sdcard_from_sdcard_with_suspend(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list,
-                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list,
+                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -1542,10 +1608,6 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
@@ -1553,6 +1615,10 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
@@ -1602,10 +1668,6 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
@@ -1613,6 +1675,10 @@ class TestBspUpdate:
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -1655,19 +1721,23 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_sdcard_with_resume(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list,
-                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list,
+                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
@@ -1701,19 +1771,22 @@ class TestBspUpdate:
     def test_fw_force_update_sdcard_from_sdcard_with_resume(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list,
-                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list,
+                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -1753,16 +1826,16 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
@@ -1801,16 +1874,16 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
         with allure.step(
                 "Execute commands to listen for signals \"firmwareCheckResults\", \"newFirmwareAvailable\", "
                 "\"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_CHECK_RESULTS) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -1843,19 +1916,22 @@ class TestBspUpdate:
     def test_fw_update_sdcard_from_sdcard_with_reject(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list,
-                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list,
+                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_FW_UPDATE,
@@ -1883,19 +1959,22 @@ class TestBspUpdate:
     def test_fw_force_update_sdcard_from_sdcard_with_reject(self, __run_from_sdcard, __prepare_for_fw_update):
         update_state_list = []
 
-        old_version, old_partition = self.__get_fw_info()
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
 
-        with allure.step("Prepare the board for further actions"):
-            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
-                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-            self.__start_signal_polling_thread(update_state_list,
-                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
+        old_version, old_partition = self.__get_fw_info()
 
         with allure.step(
                 "Execute commands to listen for signals \"newFirmwareAvailable\", \"forcedFirmwareChecked\" and \"firmwareUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_FIMWARE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_FIRMWARE_CHECKED) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FIRMWARE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the board for further actions"):
+            assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH + CommonConst.FW_FILE_NAME,
+                                          CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
+            self.__start_signal_polling_thread(update_state_list,
+                                               BspUpdateSignalSequences.new_fw_available_forced[-1])
 
         with allure.step("Execute following command: forceFirmwareUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -1928,25 +2007,31 @@ class TestBspUpdate:
             self.__create_model_number_file(path=CommonConst.FW_PCKG_PATH_ON_SDCARD,
                                             content=CommonConst.FILE_MODEL_NUMBER_CONTENT_COMMONUI)
 
-        self.__update_firmware(CommonConst.BOOT_DEVICE_SDCARD, FW_FILE_PATH_ON_FLASH_WO_PACKAGES)
+        self.__update_firmware(CommonConst.BOOT_DEVICE_SDCARD, FW_FILE_PATH_ON_FLASH)
 
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(f"Cleanup   {CommonConst.HW_MANAGER_PACKAGE}"):
+            assert CommonHelper.package_remove(CommonConst.HW_MANAGER_PACKAGE) is True
+
+        with allure.step(f"Cleanup   {CommonConst.SCREENGRABBER_PACKAGE}"):
+            assert CommonHelper.package_remove(CommonConst.SCREENGRABBER_PACKAGE) is True
 
         with allure.step("Check version of the packages. They should not be present in the system"):
             assert self.__get_package_version(CommonRegex.RESULT_HW_MANAGER) is None
             assert self.__get_package_version(CommonRegex.RESULT_SCREENGRABBER) is None
-
-        with allure.step("Prepare the packages to update"):
-            assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.HW_MANAGER_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
-            assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
-                                          FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
 
         with allure.step("Execute commands to listen for signals \"packageCheckResults\", "
                          "\"newPackageAvailable\" and \"packageUpdateState:\""):
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
             assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
+        with allure.step("Prepare the packages to update"):
+            assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.HW_MANAGER_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
+            assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
+                                          FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2004,6 +2089,12 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step("Execute commands to listen for signals \"packageCheckResults\","
+                         "\"newPackageAvailable\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare the package and the board to update"):
             package_test_version = self.__get_random_test_version()
             self.__set_package_version(CommonRegex.RESULT_HW_MANAGER, package_test_version)
@@ -2012,12 +2103,6 @@ class TestBspUpdate:
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.update_pckg_from_usb_or_after_suspense[-1])
-
-        with allure.step("Execute commands to listen for signals \"packageCheckResults\","
-                         "\"newPackageAvailable\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2062,18 +2147,18 @@ class TestBspUpdate:
 
         old_version, old_partition, old_alt_version = self.__get_fw_info(get_alt_fw_version=True)
 
+        with allure.step("Execute commands to listen for signals \"packageCheckResults\","
+                         "\"newPackageAvailable\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare the package and the board to update"):
             package_test_version = self.__get_random_test_version()
             self.__set_package_version(CommonRegex.RESULT_HW_MANAGER, package_test_version)
             # copy hw manager package. It can have any version in its name
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.HW_MANAGER_NAME,
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
-
-        with allure.step("Execute commands to listen for signals \"packageCheckResults\","
-                         "\"newPackageAvailable\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2114,6 +2199,12 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step("Execute commands to listen for signals \"packageCheckResults\","
+                         "\"newPackageAvailable\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare the packages and the board to update"):
             # set screengrabber version
             screengrabber_test_version = self.__get_random_test_version()
@@ -2128,12 +2219,6 @@ class TestBspUpdate:
             # copy hw manager package. It can have any version in its name
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.HW_MANAGER_NAME,
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
-
-        with allure.step("Execute commands to listen for signals \"packageCheckResults\","
-                         "\"newPackageAvailable\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2185,6 +2270,12 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step("Execute commands to listen for signals \"packageCheckResults\","
+                         "\"newPackageAvailable\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare the packages and the board to update"):
             # set screengrabber version
             screengrabber_test_version = self.__get_random_test_version()
@@ -2198,12 +2289,6 @@ class TestBspUpdate:
             # copy hw manager package. It can have any version in its name
             assert CommonHelper.copy_file(FW_FILE_PATH_ON_FLASH_CORRUPTED + CommonConst.HW_MANAGER_NAME_NO_PACKAGE,
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
-
-        with allure.step("Execute commands to listen for signals \"packageCheckResults\","
-                         "\"newPackageAvailable\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2268,7 +2353,6 @@ class TestBspUpdate:
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
-
         with allure.step("Wait for 'firmwareCheckResults', 'firmwareUpdateState' signals"):
             assert self.__cli_dbus_util.get_signal(timeout=CommonConst.TIMEOUT_4_MIN) is not None
             assert CommonConst.CHECK_RESULTS_SUCCESS in self.__debug_cli.get_message(
@@ -2279,7 +2363,6 @@ class TestBspUpdate:
                 CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_DBUS_RESULT_FW_UPDATE_STATE)
             assert CommonConst.ROOTFS_UPDATE_STARTED in self.__debug_cli.get_message(
                 CommonConst.TIMEOUT_4_MIN, CliRegexConsts.REGEX_DBUS_RESULT_FW_UPDATE_STATE)
-
         with allure.step("Disconnect emulated USB flash from the Common UI board"):
             self.__cli_dbus_util.clear_subscription_list()
             self.__cli_dbus_util.clear_signal_list()
@@ -2299,8 +2382,10 @@ class TestBspUpdate:
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
 
         new_version, new_partition, alternate_version = self.__get_fw_info(get_alt_fw_version=True)
+        alt_partition = self.__get_alt_partition()
+        fw_log = CommonHelper.check_file(alt_partition, CommonConst.CHECK_FW_MANGER_LOG)
         assert new_version in old_version
-        assert alternate_version in CommonConst.UNDEFINED
+        assert fw_log is False
         assert new_partition in old_partition
 
         with allure.step("Delete firmware package from flash drive path to prevent fw update"):
@@ -2355,7 +2440,14 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_usb_with_suspend_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -2365,10 +2457,6 @@ class TestBspUpdate:
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
-
-        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2413,7 +2501,14 @@ class TestBspUpdate:
                                                                 ):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -2421,10 +2516,6 @@ class TestBspUpdate:
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.HW_MANAGER_NAME,
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
             self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_pckg_available[-1])
-
-        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2468,7 +2559,14 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_usb_with_resume_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -2478,10 +2576,6 @@ class TestBspUpdate:
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
-
-        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2522,7 +2616,14 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_usb_with_suspend_reject(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -2530,10 +2631,6 @@ class TestBspUpdate:
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.HW_MANAGER_NAME,
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
             self.__start_signal_polling_thread(update_state_list, BspUpdateSignalSequences.new_pckg_available[-1])
-
-        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2573,7 +2670,14 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_usb_with_reject_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -2583,10 +2687,6 @@ class TestBspUpdate:
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           FLASH_DRIVE_PATH + CommonConst.WB_PACKAGE_USB_PATH) is True
-
-        with allure.step("Execute commands to listen for signals \"newPackageAvailable\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Connect emulated flash"):
             self.__usb_flash.emulate_flash_start()
@@ -2630,7 +2730,16 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -2642,12 +2751,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.update_package_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_PACKAGE_UPDATE,
@@ -2687,7 +2790,16 @@ class TestBspUpdate:
     def test_package_force_update_sdcard_from_sdcard_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -2699,12 +2811,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.update_package_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -2751,6 +2857,14 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step(
+                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
+                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare package to update"):
             self.__set_fw_version_from_specified_source(path=PACKAGE_FILE_PATH_ON_FLASH + CommonConst.HW_MANAGER_NAME,
                                                         version_path=CommonConst.HARDWARE_MANAGER_VERSION_PATH)
@@ -2761,14 +2875,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
-        with allure.step(
-                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
-                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(
@@ -2825,6 +2931,14 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step(
+                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
+                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare package to update"):
             self.__set_fw_version_from_specified_source(path=PACKAGE_FILE_PATH_ON_FLASH + CommonConst.HW_MANAGER_NAME,
                                                         version_path=CommonConst.HARDWARE_MANAGER_VERSION_PATH)
@@ -2835,14 +2949,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
-        with allure.step(
-                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
-                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(
@@ -2898,6 +3004,14 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step(
+                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
+                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
             self.__set_package_version(CommonRegex.RESULT_HW_MANAGER, package_test_version)
@@ -2906,14 +3020,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
-        with allure.step(
-                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
-                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate for hardware manager"):
             assert self.__cli_dbus_util.run_method(
@@ -2969,6 +3075,14 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step(
+                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
+                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
             self.__set_package_version(CommonRegex.RESULT_HW_MANAGER, package_test_version)
@@ -2977,14 +3091,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
-        with allure.step(
-                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
-                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate for hardware manager"):
             assert self.__cli_dbus_util.run_method(
@@ -3041,6 +3147,14 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step(
+                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
+                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
             self.__set_package_version(CommonRegex.RESULT_HW_MANAGER, package_test_version)
@@ -3049,14 +3163,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
-        with allure.step(
-                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
-                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate for hardware manager"):
             assert self.__cli_dbus_util.run_method(
@@ -3113,6 +3219,14 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step(
+                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
+                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
             self.__set_package_version(CommonRegex.RESULT_HW_MANAGER, package_test_version)
@@ -3121,14 +3235,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
-        with allure.step(
-                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
-                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate for hardware manager"):
             assert self.__cli_dbus_util.run_method(
@@ -3184,6 +3290,14 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step(
+                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
+                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
             self.__set_package_version(CommonRegex.RESULT_HW_MANAGER, package_test_version)
@@ -3192,14 +3306,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
-        with allure.step(
-                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
-                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate for hardware manager"):
             assert self.__cli_dbus_util.run_method(
@@ -3255,6 +3361,14 @@ class TestBspUpdate:
 
         old_version, old_partition = self.__get_fw_info()
 
+        with allure.step(
+                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
+                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
+
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
             self.__set_package_version(CommonRegex.RESULT_HW_MANAGER, package_test_version)
@@ -3263,14 +3377,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             assert CommonHelper.copy_file(PACKAGE_FILE_PATH_ON_FLASH + CommonConst.SCREENGRABBER_NAME,
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
-
-        with allure.step(
-                "Execute commands to listen for signals \"packageCheckResults\", \"newPackageAvailable\","
-                "\"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_CHECK_RESULTS) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate for hardware manager"):
             assert self.__cli_dbus_util.run_method(
@@ -3319,7 +3425,16 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_with_suspend(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3328,12 +3443,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_PACKAGE_UPDATE,
@@ -3372,7 +3481,16 @@ class TestBspUpdate:
     def test_package_force_update_sdcard_from_sdcard_with_suspend(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3381,12 +3499,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -3426,7 +3538,16 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_with_suspend_resume_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\" , \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3438,12 +3559,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\" , \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_PACKAGE_UPDATE,
@@ -3496,7 +3611,16 @@ class TestBspUpdate:
     def test_package_force_update_sdcard_from_sdcard_with_suspend_resume_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\" , \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3508,12 +3632,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\" , \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -3565,7 +3683,16 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_with_resume(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3574,12 +3701,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_PACKAGE_UPDATE,
@@ -3617,7 +3738,16 @@ class TestBspUpdate:
     def test_package_force_update_sdcard_from_sdcard_with_resume(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3626,12 +3756,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -3672,7 +3796,16 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_with_suspend_reject_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3684,12 +3817,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_PACKAGE_UPDATE,
@@ -3736,7 +3863,16 @@ class TestBspUpdate:
     def test_package_force_update_sdcard_from_sdcard_with_suspend_reject_two_packs(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3748,12 +3884,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,
@@ -3798,7 +3928,16 @@ class TestBspUpdate:
     def test_package_update_sdcard_from_sdcard_with_reject(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3807,12 +3946,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_PACKAGE_UPDATE,
@@ -3845,7 +3978,16 @@ class TestBspUpdate:
     def test_package_force_update_sdcard_from_sdcard_with_reject(self, __run_from_sdcard):
         update_state_list = []
 
+        with allure.step("Create 'modelNumber.txt'"):
+            self.__create_model_number_file()
+
         old_version, old_partition = self.__get_fw_info()
+
+        with allure.step(
+                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
+            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Prepare package to update"):
             package_test_version = self.__get_random_test_version()
@@ -3854,12 +3996,6 @@ class TestBspUpdate:
                                           CommonConst.FW_PCKG_PATH_ON_SDCARD) is True
             self.__start_signal_polling_thread(update_state_list,
                                                BspUpdateSignalSequences.new_pckg_available_forced[-1])
-
-        with allure.step(
-                "Execute commands to listen for signals \"newPackageAvailable\", \"forcedPackageChecked\" and \"packageUpdateState:\""):
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.NEW_PACKAGE_AVAILABLE) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.FORCED_PACKAGE_CHECKED) is True
-            assert self.__cli_dbus_util.subscribe_signal_notification(DbusSignalConsts.PACKAGE_UPDATE_STATE) is True
 
         with allure.step("Execute following command: forcePackageUpdate"):
             assert self.__cli_dbus_util.run_method(DbusFuncConsts.FORCE_UPDATE,

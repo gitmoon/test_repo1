@@ -91,7 +91,7 @@ class CommonRegex:
     RESULT_HW_MANAGER = re.compile(r"hardware-manager-\d+\.\d+-r\d+")
     RESULT_SCREENGRABBER = re.compile(r"screengrabber-\d+\.\d+-r\d+")
     FW_PCKG_VERSION = re.compile(r"\d{8,}")
-    BAD_LINUX_KERNEL = re.compile(r"Bad Linux ARM zImage magic!")
+    BAD_LINUX_KERNEL = re.compile(r"ERROR: can't get kernel image!")
     LSMOD_ATH10K = re.compile(r"ath10k")
     IW_ERROR = re.compile(r"(Operation not supported)|(Invalid parameter:)")
     IW_LINK_SSID = re.compile(r"SSID: .+")
