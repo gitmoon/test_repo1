@@ -168,6 +168,8 @@ class CliCommonUtil:
                 print("login() already logged in")
                 return True
 
+            time.sleep(CommonConst.TIMEOUT_60_SEC)
+
             result = self.__perform_command(self.__login, self.__COMMAND_RESPONSE_TIMEOUT,
                                             [CliRegexConsts.REGEX_LOGGED_IN, CliRegexConsts.REGEX_PASSWORD])
             if result is None:

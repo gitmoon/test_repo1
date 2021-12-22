@@ -12,9 +12,9 @@ WIFI_SSID = "ssid"
 WIFI_PASS = "pass"
 
 """
-2.5. EMMC
+2.5. SD
 """
-USB_DEVICE_NAME = "sda3"  # USB flash drive device name
+USB_DEVICE_NAME = "sda2"  # USB flash drive device name
 TEST_FILE = "100MB.bin"  # Test file name for read and write operations
 HOME_DIR = "/home/root"  # Home directory
 TEMP_DIR = "/temp"  # Temporary directory

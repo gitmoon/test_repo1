@@ -1,8 +1,10 @@
+# Image test generator (ver 0.3)
 # Initial data:
-# ./common/files/privatekey.pem
-# ./common/files/bad_kernel/welbilt_common_ui43.itb
-# ./common/welbilt-firmware-image-welbilt-common-ui43.tar
-# ./package/hardware-manager-1.0-r0_update.tar
+# Put files to source:
+# source/privatekey.pem
+# source/bad_kernel/welbilt_common_ui43.itb
+# source/common/welbilt-firmware-image-welbilt-common-ui43.tar
+# package/hardware-manager-1.0-r0_update.tar
 
 import os
 import sys
@@ -14,38 +16,53 @@ import OpenSSL
 from OpenSSL import crypto
 
 
-
+#-----input fils------------------------
 IMAGE_TAR = "welbilt-firmware-image-welbilt-common-ui43.tar"
 PACKAGE_HW_MANAGER_TAR = "hardware-manager-1.0-r0_update.tar"
-PRIVATE_KEY = "common/files/privatekey.pem"
-BAD_KERNEL_ITB = "common/files/bad_kernel/welbilt_common_ui43.itb"
-
-COMMON_DIR = "common/"
+PACKAGE_SCREENGRABBER_TAR = "screengrabber-1.0-r0_update.tar"
+PRIVATE_KEY = "privatekey.pem"
+BAD_KERNEL = "welbilt_common_ui43.itb"
+#-------DIRS-----------------------------------
+DIR_TWO_UP = "../../"
+DIR_ROOT = "files_for_emulated_flash_drive/"
+DIR_PRODUCTION = "flash_data_prod_auto/"
+DIR_SLIM = "flash_data_slim_auto/"
+DIR_BSPUPDATE = "bsp_update/"
+SOURCE_DIR = "source/"
 PACKAGE_DIR = "package/"
+BAD_KERNEL_DIR = "bad_kernel/"
 TMP_IMAGE_DIR = "tmp_input_dir/"
 TMP_PACKAGE_DIR = "tmp_package_dir/"
 TMP_HW_MANAGER_DIR = "tmp_hw_manager/"
+TMP_SCREENGRABBER_DIR = "tmp_screengrabber/"
 #-------Files image and package------------
 VERSION_FILE_SIG = "version.txt.sig"
 COMPATIBILITY_RULES = "compatibility_rules.txt" 
 COMPATIBILITY_RULES_SIG = "compatibility_rules.txt.sig" 
-KERNEL_ITB = "welbilt_common_ui43.itb"
-KERNEL_ITB_SIG ="welbilt_common_ui43.itb.sig"
+KERNEL = "welbilt_common_ui43.itb"
+KERNEL_SIG ="welbilt_common_ui43.itb.sig"
+KERNEL_BACKUP = "welbilt_common_ui43_backup.itb"
+KERNEL_SIG_BACKUP = "welbilt_common_ui43_backup.sig"
 #-----Out directories------------------------------
-DIR_MISS_FILE = "miss_file/"
-DIR_BAD_KERNEL = "bad_kernel/"
+COMMON_DIR = "common/"
+DIR_MISS = "miss_file/"
 DIR_CORRUPTED = "corrupted/"
 #-------Generated files-----------------------------
 CORRUPTED_FILE_INVALID_SIG = "welbilt-firmware-image-welbilt-common-ui43_invalid_sig.tar"
 HWMANAGER_NO_PACKAGE = "hardware-manager-1.0-r0_update_no_package.tar"
 HWMANAGER_NOT_COMPATIBLE = "hardware-manager-1.0-r0_update_not_compatible.tar" 
 HWMANAGER_INVALID_SIG = "hardware-manager-1.0-r0_update_invalid_sig.tar"
+HWMANAGER_BROKEN = "hardware-manager-1.0-r0_update_broken.tar"
 #------------------------------------------
+COMMON_FILES_COLLECTION = ["version.txt", "version.txt.sig",
+                           "compatibility_rules.txt", "compatibility_rules.txt.sig",
+                           "welbilt_common_ui43.itb", "welbilt_common_ui43.itb.sig",
+                           "welbilt-common-ui43.tar.gz", "welbilt-common-ui43.tar.gz.sig",
+                           ]
+
 MISS_FILES_COLLECTION = ["version.txt", "version.txt.sig",
                          "compatibility_rules.txt", "compatibility_rules.txt.sig",
                          "welbilt_common_ui43.itb", "welbilt_common_ui43.itb.sig"
-                         # exclude files welbilt-common-ui43.tar.gz
-                         # exclude welbilt-common-ui43.tar.gz.sig
                          ]
 
 IMAGE_FILES_COLLECTION = ["version.txt", "version.txt.sig",
@@ -54,7 +71,7 @@ IMAGE_FILES_COLLECTION = ["version.txt", "version.txt.sig",
                          "welbilt-common-ui43.tar.gz", "welbilt-common-ui43.tar.gz.sig"
                          ]
 
-COLLECTION_HW_MANAGER_FULL = ["version.txt", "version.txt.sig",
+COLLECTION_PACKAGE_FULL = ["version.txt", "version.txt.sig",
                          "compatibility_rules.txt", "compatibility_rules.txt.sig",
                          "postinstall.sh", "postinstall.sh.sig",
                          "preinstall.sh", "preinstall.sh.sig",
@@ -91,6 +108,12 @@ def backupFile(file, newfile):
 def copyFile(file, newfile):
     copyfile(file, newfile)
 
+def copyPath(src, dest):
+    if os.path.exists(src):
+        shutil.rmtree(dest)
+    shutil.copytree(src, dest)
+
+
 def removeFile(file):
     if os.path.exists(file):
         os.remove(file)
@@ -101,7 +124,7 @@ def removeDir(dir):
     try:
         shutil.rmtree(dir)
     except OSError as e:
-        print("Error: %s - %s." % (e.filename, e.strerror))
+        print("Remove error: %s - %s." % (e.filename, e.strerror))
     
 
 def restoreFile(file, newfile):
@@ -126,7 +149,7 @@ def write_to_file(file_name, text):
 #Ex using command line: 
 #openssl dgst -sha256 -sign  privatekey.pem -out welbilt_common_ui43.itb.sig  welbilt_common_ui43.itb
 def create_sign(file_name):
-    key_file = open(PRIVATE_KEY, "r")
+    key_file = open(DIR_TWO_UP + SOURCE_DIR + PRIVATE_KEY, "r")
     key = key_file.read()
     key_file.close()
     password = ""
@@ -146,26 +169,38 @@ def create_sign(file_name):
 
 
 class Images:
-    def __init__(self):
-        print("Init Images")
-        removeDir(DIR_MISS_FILE)
+    def __init__(self, image_type):
+        print("Init Images " + image_type)
+        removeDir(DIR_MISS)
         removeDir(DIR_CORRUPTED)
-        removeDir(DIR_BAD_KERNEL)
-        createDir(TMP_IMAGE_DIR)
+        removeDir(BAD_KERNEL_DIR)
+        removeDir(COMMON_DIR)
+
         createDir(DIR_CORRUPTED) 
-        createDir(DIR_MISS_FILE)
-        createDir(DIR_BAD_KERNEL)
-        print("Unpack common/welbilt-firmware-image-welbilt-common-ui43.tar to a temporary directory")
-        unpackFile(COMMON_DIR + IMAGE_TAR, TMP_IMAGE_DIR)        
+        createDir(DIR_MISS)
+        createDir(BAD_KERNEL_DIR)
+        createDir(COMMON_DIR)
+        TMP_FILE = DIR_TWO_UP + SOURCE_DIR + image_type + COMMON_DIR + IMAGE_TAR
+        print("Unpack common " + IMAGE_TAR +  " to a temporary directory")
+        unpackFile(TMP_FILE, TMP_IMAGE_DIR)        
    
     def __del__(self):
         print("Remove " + TMP_IMAGE_DIR)
         removeDir(TMP_IMAGE_DIR)
+        
+    def common(self, image_type):
+        COMMON_FILE = IMAGE_TAR
+        print("Prepare common_file " + COMMON_FILE)
+        TMP_COMPATIBILITY_FILE = DIR_TWO_UP + SOURCE_DIR + image_type + COMMON_DIR + COMPATIBILITY_RULES
+        copyFile(TMP_COMPATIBILITY_FILE, TMP_IMAGE_DIR + COMPATIBILITY_RULES)
+        create_sign(TMP_IMAGE_DIR + COMPATIBILITY_RULES)
+        packFiles(COMMON_DIR, COMMON_FILE, TMP_IMAGE_DIR, COMMON_FILES_COLLECTION)
+        
    
     def miss_file(self):
         MISS_FILE = IMAGE_TAR
-        print("Create miss_file/welbilt-firmware-image-welbilt-common-ui43.tar")
-        packFiles(DIR_MISS_FILE, MISS_FILE, TMP_IMAGE_DIR, MISS_FILES_COLLECTION)
+        print("Create miss_file " + MISS_FILE)
+        packFiles(DIR_MISS, MISS_FILE, TMP_IMAGE_DIR, MISS_FILES_COLLECTION)
         
 #"SW.BSP.UPDATE.111 Negative: Firmware Update from Common UI file system on eMMC, invalid sig file in the new firmware package")
     def invalid_sig(self):
@@ -179,49 +214,68 @@ class Images:
         
     def bad_kernel(self):
         BAD_KERNEL_FILE = IMAGE_TAR
-        print("create " + DIR_BAD_KERNEL + BAD_KERNEL_FILE)
-        KERNEL_ITB_BACKUP = "welbilt_common_ui43_backup.itb"
-        KERNEL_ITB_SIG_BACKUP = "welbilt_common_ui43_backup.itb.sig"
-        backupFile(TMP_IMAGE_DIR + KERNEL_ITB, TMP_IMAGE_DIR + KERNEL_ITB_BACKUP)
-        backupFile(TMP_IMAGE_DIR + KERNEL_ITB_SIG, TMP_IMAGE_DIR + KERNEL_ITB_SIG_BACKUP)
-        copyFile(BAD_KERNEL_ITB, TMP_IMAGE_DIR + KERNEL_ITB)
-        create_sign(TMP_IMAGE_DIR + KERNEL_ITB)
-        packFiles(DIR_BAD_KERNEL, BAD_KERNEL_FILE, TMP_IMAGE_DIR, IMAGE_FILES_COLLECTION)
-        restoreFile(TMP_IMAGE_DIR + KERNEL_ITB_BACKUP, TMP_IMAGE_DIR + KERNEL_ITB)
-        restoreFile(TMP_IMAGE_DIR + KERNEL_ITB_SIG_BACKUP, TMP_IMAGE_DIR + KERNEL_ITB_SIG)
-        removeFile(TMP_IMAGE_DIR + KERNEL_ITB_BACKUP)
-        removeFile(TMP_IMAGE_DIR + KERNEL_ITB_SIG_BACKUP)
+        print("create " + BAD_KERNEL_DIR + BAD_KERNEL_FILE)
+        backupFile(TMP_IMAGE_DIR + KERNEL, TMP_IMAGE_DIR + KERNEL_BACKUP)
+        backupFile(TMP_IMAGE_DIR + KERNEL_SIG, TMP_IMAGE_DIR + KERNEL_SIG_BACKUP)
+        
+        copyFile(DIR_TWO_UP + SOURCE_DIR + BAD_KERNEL_DIR + BAD_KERNEL, TMP_IMAGE_DIR + KERNEL)
+        create_sign(TMP_IMAGE_DIR + KERNEL)
+        packFiles(BAD_KERNEL_DIR, BAD_KERNEL_FILE, TMP_IMAGE_DIR, IMAGE_FILES_COLLECTION)
+        restoreFile(TMP_IMAGE_DIR + KERNEL_BACKUP, TMP_IMAGE_DIR + KERNEL)
+        restoreFile(TMP_IMAGE_DIR + KERNEL_SIG_BACKUP, TMP_IMAGE_DIR + KERNEL_SIG)
+        removeFile(TMP_IMAGE_DIR + KERNEL_BACKUP)
+        removeFile(TMP_IMAGE_DIR + KERNEL_SIG_BACKUP)
         
 
 
 class Packages:
     def __init__(self):
-        print("Init Packages")
+        print("Remove " + PACKAGE_DIR)
+        removeDir(PACKAGE_DIR)
+        print("Create Packages")
+        createDir(PACKAGE_DIR)
         createDir(TMP_PACKAGE_DIR)
         
     def __del__(self):
         print("Remove " + TMP_PACKAGE_DIR)
         removeDir(TMP_PACKAGE_DIR)
+        
+    def __create_package(self, PACKAGE_TAR, TMP_DIR):
+        unpackFile(DIR_TWO_UP + SOURCE_DIR + PACKAGE_DIR + PACKAGE_TAR, TMP_PACKAGE_DIR + TMP_DIR)
+        path_short = TMP_PACKAGE_DIR + TMP_DIR + COMPATIBILITY_RULES
+        removeFile(path_short)
+        removeFile(TMP_PACKAGE_DIR + TMP_DIR + COMPATIBILITY_RULES_SIG)
+        
+        TMP_COMPATIBILITY_FILE = DIR_TWO_UP + SOURCE_DIR + PACKAGE_DIR + COMPATIBILITY_RULES
+        copyFile(TMP_COMPATIBILITY_FILE, path_short)
+        create_sign(path_short)
+        packFiles(PACKAGE_DIR, PACKAGE_TAR, TMP_PACKAGE_DIR + TMP_DIR, COLLECTION_PACKAGE_FULL)
+        removeDir(TMP_PACKAGE_DIR + TMP_DIR)
+    
+    def package(self):
+        self.__create_package(PACKAGE_SCREENGRABBER_TAR, TMP_SCREENGRABBER_DIR)
+        self.__create_package(PACKAGE_HW_MANAGER_TAR, TMP_HW_MANAGER_DIR)
+
 
 #"SW.BSP.UPDATE.254 Negative: Firmware Package Update from Common UI file system on eMMC, "two packages, one not compatible")
 #"SW.BSP.UPDATE.254.1 Negative: Firmware Package Update from Common UI file system on eMMC,""two packages, one not compatible (forceUpdate)")
     def compatibility_issue(self):
         COMPATIBILITY_RULES_TEXT_1 = "test_\d\.\d\.\d\n" 
         removeDir(TMP_PACKAGE_DIR + TMP_HW_MANAGER_DIR)
-        unpackFile(PACKAGE_DIR + PACKAGE_HW_MANAGER_TAR, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR)
+        unpackFile(DIR_TWO_UP + SOURCE_DIR + PACKAGE_DIR + PACKAGE_HW_MANAGER_TAR, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR)
         path_short = TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR+COMPATIBILITY_RULES
         removeFile(path_short)
         removeFile(TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR+COMPATIBILITY_RULES_SIG)
         create_file(path_short)
         write_to_file(path_short,COMPATIBILITY_RULES_TEXT_1)
         create_sign(path_short)
-        packFiles(DIR_CORRUPTED, HWMANAGER_NOT_COMPATIBLE, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR, COLLECTION_HW_MANAGER_FULL)
+        packFiles(DIR_CORRUPTED, HWMANAGER_NOT_COMPATIBLE, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR, COLLECTION_PACKAGE_FULL)
         
 #"SW.BSP.UPDATE.193 Negative: Firmware Package Update through USB Flash on eMMC, two packages,""one package with missing file"
     def missing_file(self):
         PACKAGE_TAR_GZ = "package.tar.gz"
         removeDir(TMP_PACKAGE_DIR + TMP_HW_MANAGER_DIR)
-        unpackFile(PACKAGE_DIR + PACKAGE_HW_MANAGER_TAR, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR)    
+        unpackFile(DIR_TWO_UP + SOURCE_DIR + PACKAGE_DIR + PACKAGE_HW_MANAGER_TAR, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR)    
         path_short = TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR+PACKAGE_TAR_GZ
         removeFile(path_short)
         packFiles(DIR_CORRUPTED, HWMANAGER_NO_PACKAGE, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR, COLLECTION_HW_MANAGER_NO_PACKAGE)       
@@ -230,41 +284,56 @@ class Packages:
 #"SW.BSP.UPDATE.252.1 Negative: Firmware Package Update from Common UI file system on eMMC, " "two packages, one package with invalid sig file (forceUpdate)")
     def invalid_sig(self):
         removeDir(TMP_PACKAGE_DIR + TMP_HW_MANAGER_DIR)
-        unpackFile(PACKAGE_DIR + PACKAGE_HW_MANAGER_TAR, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR)
+        unpackFile(DIR_TWO_UP + SOURCE_DIR + PACKAGE_DIR + PACKAGE_HW_MANAGER_TAR, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR)
         modifyFile(TMP_PACKAGE_DIR + TMP_HW_MANAGER_DIR + VERSION_FILE_SIG)
-        packFiles(DIR_CORRUPTED, HWMANAGER_INVALID_SIG, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR, COLLECTION_HW_MANAGER_FULL)        
+        packFiles(DIR_CORRUPTED, HWMANAGER_INVALID_SIG, TMP_PACKAGE_DIR+TMP_HW_MANAGER_DIR, COLLECTION_PACKAGE_FULL)        
 
 
+    def broken(self):
+        create_file(DIR_CORRUPTED + HWMANAGER_BROKEN)
 
-def check_production_init():
-    DIR_ROOT = "files_for_emulated_flash_drive/"
-    DIR_PRODUCTION = "flash_data_prod/"
-    DIR_BSPUPDATE = "bsp_update"
-    os.chdir(DIR_ROOT + DIR_PRODUCTION + DIR_BSPUPDATE)
-    
-    INPUT_FILES = [COMMON_DIR + IMAGE_TAR, PRIVATE_KEY, PACKAGE_DIR+PACKAGE_HW_MANAGER_TAR, BAD_KERNEL_ITB]
+def check_source_files(imageType):
+    os.chdir(DIR_ROOT + SOURCE_DIR)   
+    INPUT_FILES = [imageType + COMMON_DIR + IMAGE_TAR, imageType + COMMON_DIR + COMPATIBILITY_RULES, PRIVATE_KEY,
+                   PACKAGE_DIR+PACKAGE_HW_MANAGER_TAR, BAD_KERNEL_DIR + BAD_KERNEL, PACKAGE_DIR+COMPATIBILITY_RULES]
     for file in INPUT_FILES:
         file_exists = os.path.exists(file)
         if file_exists == False:
             raise Exception("Can't find the file " + file)
     print("Input files for generating production images is ok ")
+    os.chdir("../") 
+
+def set_path(imageType):
+    if imageType == "prod/":
+        createDir(DIR_PRODUCTION)
+        createDir(DIR_PRODUCTION + DIR_BSPUPDATE)
+        os.chdir(DIR_PRODUCTION + DIR_BSPUPDATE)
+    elif imageType == "slim/":
+        createDir(DIR_SLIM)
+        createDir(DIR_SLIM + DIR_BSPUPDATE)
+        os.chdir(DIR_SLIM + DIR_BSPUPDATE)
 
 
 if __name__ == "__main__":
 
+#    imageType = "slim/"
+    imageType = "prod/"
     try:
-        check_production_init()
+        check_source_files(imageType)
     except Exception as e:
         print("Init error: " + str(e))
     else:
-        image = Images()
+        set_path(imageType)
+        image = Images(imageType)
+        image.common(imageType)
         image.miss_file()
         image.invalid_sig()
         image.bad_kernel()
         
-        
         package = Packages()
+        package.package()
         package.compatibility_issue()
         package.missing_file()
         package.invalid_sig()
+        package.broken()
  
