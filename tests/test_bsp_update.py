@@ -2173,8 +2173,7 @@ class TestBspUpdate:
         with allure.step("Disconnect emulated flash"):
             self.__usb_flash.emulate_flash_stop()
 
-        with allure.step("Reboot the system"):
-            self.__cli_dbus_util.clear_subscription_list()
+        with allure.step("Reboot the board"):
             assert self.__cli_common_util.reboot() is True
             assert self.__cli_common_util.login() is True
 
