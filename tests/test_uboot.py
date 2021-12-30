@@ -104,7 +104,7 @@ class TestUboot:
     def test_uboot_eeprom(self):
         with allure.step(f"Set current i2c device to"):
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_DEV + CommonConst.I2C_DEV_EEPROM)
-            # time.sleep(CommonConst.TIMEOUT_5_SEC)
+            time.sleep(CommonConst.TIMEOUT_5_SEC)
             self.__debug_cli.send_message(CommonConst.COMMAND_UBOOT_I2C + CommonConst.COMMAND_UBOOT_DEV)
             time.sleep(CommonConst.TIMEOUT_5_SEC)
             assert self.__debug_cli.get_message(CommonConst.TIMEOUT_10_SEC,
